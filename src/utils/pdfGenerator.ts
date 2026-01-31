@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import type { CharacterCard } from '../types';
+import type { CharacterCard, NameSettings, NameBackgroundType, FontOption, BlockSizeOption } from '../types';
 import {
   CARD_WIDTH_MM,
   HALF_WIDTH_MM,
@@ -142,6 +142,321 @@ const drawFoldLine = (
 };
 
 /**
+ * Get CSS font string based on font option (for canvas context)
+ */
+const getCanvasFont = (font: FontOption, sizePx: number): string => {
+  switch (font) {
+    case 'medieval':
+      return `bold ${sizePx}px "Times New Roman", serif`;
+    case 'elegant':
+      return `italic ${sizePx}px Georgia, serif`;
+    case 'bold':
+      return `900 ${sizePx}px Arial, sans-serif`;
+    case 'fantasy':
+      return `bold ${sizePx}px "Courier New", monospace`;
+    default:
+      return `bold ${sizePx}px "Times New Roman", serif`;
+  }
+};
+
+/**
+ * Get block height in mm based on size option
+ */
+const getBlockHeightMm = (size: BlockSizeOption): number => {
+  switch (size) {
+    case 'small':
+      return 7;
+    case 'medium':
+      return 10;
+    case 'large':
+      return 14;
+    default:
+      return 10;
+  }
+};
+
+/**
+ * Background configuration for gradient rendering
+ * Gradients go from bottom (opaque) to top (transparent) like in CSS preview
+ */
+interface BackgroundConfig {
+  gradientStops: { offset: number; color: string }[];
+  textColor: string;
+  borderColor?: string;
+}
+
+/**
+ * Get background configuration with gradient stops
+ * Matches CSS: linear-gradient(to top, solid 0%, faded 60%, transparent 100%)
+ */
+const getBackgroundConfig = (bg: NameBackgroundType): BackgroundConfig => {
+  switch (bg) {
+    case 'gradient-dark':
+      return {
+        gradientStops: [
+          { offset: 0, color: 'rgba(0, 0, 0, 0.9)' },
+          { offset: 0.6, color: 'rgba(0, 0, 0, 0.6)' },
+          { offset: 1, color: 'rgba(0, 0, 0, 0)' },
+        ],
+        textColor: '#ffffff',
+      };
+    case 'gradient-gold':
+      return {
+        gradientStops: [
+          { offset: 0, color: 'rgba(139, 109, 56, 0.95)' },
+          { offset: 0.6, color: 'rgba(139, 109, 56, 0.6)' },
+          { offset: 1, color: 'rgba(139, 109, 56, 0)' },
+        ],
+        textColor: '#ffffff',
+      };
+    case 'gradient-red':
+      return {
+        gradientStops: [
+          { offset: 0, color: 'rgba(120, 40, 40, 0.95)' },
+          { offset: 0.6, color: 'rgba(120, 40, 40, 0.6)' },
+          { offset: 1, color: 'rgba(120, 40, 40, 0)' },
+        ],
+        textColor: '#ffffff',
+      };
+    case 'scroll':
+      return {
+        gradientStops: [
+          { offset: 0, color: 'rgba(210, 180, 140, 0.95)' },
+          { offset: 0.7, color: 'rgba(210, 180, 140, 0.7)' },
+          { offset: 1, color: 'rgba(210, 180, 140, 0)' },
+        ],
+        textColor: '#3d2b1f',
+        borderColor: 'rgba(139, 109, 56, 0.6)',
+      };
+    case 'banner':
+      return {
+        gradientStops: [
+          { offset: 0, color: 'rgba(80, 20, 20, 0.95)' },
+          { offset: 0.6, color: 'rgba(120, 30, 30, 0.8)' },
+          { offset: 1, color: 'rgba(120, 30, 30, 0)' },
+        ],
+        textColor: '#ffffff',
+        borderColor: 'rgba(205, 173, 109, 0.5)',
+      };
+    case 'shield':
+      return {
+        gradientStops: [
+          { offset: 0, color: 'rgba(50, 50, 60, 0.95)' },
+          { offset: 0.6, color: 'rgba(70, 70, 80, 0.7)' },
+          { offset: 1, color: 'rgba(70, 70, 80, 0)' },
+        ],
+        textColor: '#ffffff',
+        borderColor: 'rgba(150, 150, 160, 0.5)',
+      };
+    default:
+      return {
+        gradientStops: [
+          { offset: 0, color: 'rgba(0, 0, 0, 0.9)' },
+          { offset: 0.6, color: 'rgba(0, 0, 0, 0.6)' },
+          { offset: 1, color: 'rgba(0, 0, 0, 0)' },
+        ],
+        textColor: '#ffffff',
+      };
+  }
+};
+
+/**
+ * Wrap text to fit within a given width
+ */
+const wrapText = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number
+): string[] => {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const metrics = ctx.measureText(testLine);
+    
+    if (metrics.width > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  }
+  
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  
+  return lines;
+};
+
+/**
+ * Renders character name label to a canvas data URL
+ * Uses canvas to support Cyrillic and other Unicode characters
+ * Supports multi-line text wrapping and gradient backgrounds
+ */
+const renderNameLabelToDataUrl = (
+  nameSettings: NameSettings,
+  widthPx: number,
+  heightPx: number,
+  rotationDeg: number = 0
+): string => {
+  const canvas = document.createElement('canvas');
+  
+  // If rotated, swap dimensions for the canvas
+  if (Math.abs(rotationDeg) === 90) {
+    canvas.width = heightPx;
+    canvas.height = widthPx;
+  } else {
+    canvas.width = widthPx;
+    canvas.height = heightPx;
+  }
+  
+  const ctx = canvas.getContext('2d')!;
+  
+  // Apply rotation
+  if (rotationDeg !== 0) {
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((rotationDeg * Math.PI) / 180);
+    ctx.translate(-widthPx / 2, -heightPx / 2);
+  }
+  
+  const config = getBackgroundConfig(nameSettings.background);
+  
+  // Draw gradient background - vertical from bottom (opaque) to top (transparent)
+  // In canvas: y=heightPx is bottom, y=0 is top
+  const gradient = ctx.createLinearGradient(0, heightPx, 0, 0);
+  for (const stop of config.gradientStops) {
+    gradient.addColorStop(stop.offset, stop.color);
+  }
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, widthPx, heightPx);
+  
+  // Draw border at top if applicable
+  if (config.borderColor) {
+    ctx.strokeStyle = config.borderColor;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, 1.5);
+    ctx.lineTo(widthPx, 1.5);
+    ctx.stroke();
+  }
+  
+  // Calculate font size based on block height, start large and scale down if needed
+  const padding = 16;
+  const maxWidth = widthPx - padding * 2;
+  const maxHeight = heightPx - padding;
+  const lineHeightMultiplier = 1.15;
+  
+  // Start with a font size proportional to height
+  let fontSize = Math.floor(heightPx * 0.45);
+  const minFontSize = 14;
+  
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+  ctx.shadowBlur = 3;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 1;
+  ctx.fillStyle = config.textColor;
+  
+  let lines: string[] = [];
+  let totalTextHeight = 0;
+  
+  // Scale down font size until text fits
+  while (fontSize >= minFontSize) {
+    ctx.font = getCanvasFont(nameSettings.font, fontSize);
+    lines = wrapText(ctx, nameSettings.name, maxWidth);
+    const lineHeight = fontSize * lineHeightMultiplier;
+    totalTextHeight = lines.length * lineHeight;
+    
+    if (totalTextHeight <= maxHeight) {
+      break;
+    }
+    fontSize -= 2;
+  }
+  
+  // Draw the text lines
+  const lineHeight = fontSize * lineHeightMultiplier;
+  const startY = (heightPx - totalTextHeight) / 2 + lineHeight / 2;
+  
+  for (let i = 0; i < lines.length; i++) {
+    ctx.fillText(lines[i], widthPx / 2, startY + i * lineHeight);
+  }
+  
+  return canvas.toDataURL('image/png');
+};
+
+/**
+ * Draws character name on a card half using canvas rendering
+ * The name is rotated to match the card orientation
+ */
+const drawCharacterName = (
+  pdf: jsPDF,
+  nameSettings: NameSettings,
+  x: number,
+  y: number,
+  halfWidth: number,
+  cardHeight: number,
+  isGmSide: boolean
+) => {
+  if (!nameSettings.enabled || !nameSettings.name.trim()) return;
+  
+  const shouldShow = 
+    nameSettings.displaySide === 'both' ||
+    (nameSettings.displaySide === 'player' && !isGmSide) ||
+    (nameSettings.displaySide === 'gm' && isGmSide);
+  
+  if (!shouldShow) return;
+
+  const inset = BORDER_WIDTH_MM + 0.5;
+  
+  // Block height based on size setting
+  const nameHeight = getBlockHeightMm(nameSettings.blockSize);
+  
+  // For rotated cards, the name label width becomes the card height
+  // and the height becomes a strip along the edge
+  const pxPerMm = 10;
+  const labelWidthMm = cardHeight - inset * 2;
+  const labelHeightMm = nameHeight;
+  
+  const labelWidthPx = labelWidthMm * pxPerMm;
+  const labelHeightPx = labelHeightMm * pxPerMm;
+  
+  // Rotation: GM side (left) is rotated +90°, player side (right) is rotated -90°
+  const rotation = isGmSide ? 90 : -90;
+  
+  // Render the name label
+  const labelDataUrl = renderNameLabelToDataUrl(nameSettings, labelWidthPx, labelHeightPx, rotation);
+  
+  // Position the label
+  // For GM side (left half): label goes on the left edge (after rotation, it's at x position)
+  // For player side (right half): label goes on the right edge
+  let labelX: number;
+  const labelY = y + inset;
+  
+  if (isGmSide) {
+    // Left edge of left half
+    labelX = x + inset;
+  } else {
+    // Right edge of right half
+    labelX = x + halfWidth - inset - nameHeight;
+  }
+  
+  // Add the rotated label image
+  // After rotation, dimensions are swapped
+  pdf.addImage(
+    labelDataUrl,
+    'PNG',
+    labelX,
+    labelY,
+    nameHeight, // width after rotation
+    labelWidthMm // height after rotation
+  );
+};
+
+/**
  * Draws white cut lines between cards for easy cutting
  */
 const drawCutLines = (
@@ -237,6 +552,15 @@ export const generatePDF = async (
 
     // Draw vertical fold line in the middle
     drawFoldLine(pdf, x + HALF_WIDTH_MM, y, cardHeight);
+
+    // Draw character name if enabled
+    const card = cards[i];
+    if (card.nameSettings?.enabled && card.nameSettings.name.trim()) {
+      // Draw on GM side (left half)
+      drawCharacterName(pdf, card.nameSettings, x, y, HALF_WIDTH_MM, cardHeight, true);
+      // Draw on player side (right half)
+      drawCharacterName(pdf, card.nameSettings, x + HALF_WIDTH_MM, y, HALF_WIDTH_MM, cardHeight, false);
+    }
   }
 
   // Draw cut lines on each page

@@ -1,6 +1,7 @@
 import { useRef, useCallback } from 'react';
 import { ACCEPTED_IMAGE_EXTENSIONS, ACCEPTED_IMAGE_TYPES } from '../constants';
 import type { CharacterCard } from '../types';
+import { defaultNameSettings } from '../types';
 
 interface ImageUploadProps {
   onImagesUploaded: (cards: CharacterCard[]) => void;
@@ -37,6 +38,7 @@ export function ImageUpload({ onImagesUploaded }: ImageUploadProps) {
         id: generateId(),
         file,
         imageUrl: URL.createObjectURL(file),
+        nameSettings: { ...defaultNameSettings },
       }));
 
       onImagesUploaded(cards);
