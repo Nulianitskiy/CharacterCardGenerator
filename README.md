@@ -1,73 +1,68 @@
-# React + TypeScript + Vite
+# Initiative Card Generator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A web application for creating printable foldable initiative cards for tabletop RPGs. Upload character images and generate PDF cards ready for printing that hang on your GM screen.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Drag & Drop Upload** - Easy image upload with drag-and-drop or file browser
+- **Multiple Layouts** - Choose between 4 or 5 cards per A4 page
+- **Foldable Design** - Cards are designed to fold vertically and hang on GM screens
+- **Decorative Borders** - Gold-accented borders with fold lines
+- **PDF Generation** - One-click PDF export for printing
+- **Responsive UI** - Works on desktop and mobile devices
 
-## React Compiler
+## Demo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The application is deployed at: https://nulianitskiy.github.io/CharacterCardGenerator/
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js 18+
+- npm or yarn
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Installation
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Clone the repository
+git clone https://github.com/nulianitskiy/CharacterCardGenerator.git
+cd CharacterCardGenerator
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Build
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# Build for production
+npm run build
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Preview production build
+npm run preview
 ```
+
+## Usage
+
+1. Open the application in your browser
+2. Upload character images (JPG, PNG, or WEBP)
+3. Select the number of cards per page (4 for larger cards, 5 for compact)
+4. Click "Generate PDF" to download the printable PDF
+5. Print the PDF and cut along the white lines between cards
+6. Fold each card vertically along the dashed line
+7. Hang the folded cards on your GM screen
+
+## Tech Stack
+
+- React 19
+- TypeScript
+- Vite
+- jsPDF for PDF generation
+
+## License
+
+MIT

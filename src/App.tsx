@@ -55,7 +55,6 @@ function App() {
           <ImageUpload onImagesUploaded={handleImagesUploaded} />
         </section>
 
-        {/* Layout toggle */}
         <section className="layout-section">
           <div className="layout-toggle">
             <span className="layout-label">Cards per page:</span>
