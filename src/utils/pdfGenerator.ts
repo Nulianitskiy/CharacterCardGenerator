@@ -1,14 +1,14 @@
 import jsPDF from 'jspdf';
 import type { CharacterCard, NameSettings, NameBackgroundType, FontOption, BlockSizeOption } from '../types';
 import {
-  CARD_WIDTH_MM,
-  HALF_WIDTH_MM,
   A4_WIDTH_MM,
   BORDER_WIDTH_MM,
   CUT_LINE_WIDTH_MM,
   FOLD_LINE_WIDTH_MM,
   FOLD_LINE_DASH_MM,
   getCardHeight,
+  getCardWidth,
+  getHalfWidth,
   getHalfHeight,
   type CardsPerPageOption,
 } from '../constants';
@@ -150,10 +150,8 @@ const getCanvasFont = (font: FontOption, sizePx: number): string => {
       return `bold ${sizePx}px "Times New Roman", serif`;
     case 'elegant':
       return `italic ${sizePx}px Georgia, serif`;
-    case 'bold':
-      return `900 ${sizePx}px Arial, sans-serif`;
     case 'fantasy':
-      return `bold ${sizePx}px "Courier New", monospace`;
+      return `${sizePx}px Papyrus, Copperplate, fantasy`;
     default:
       return `bold ${sizePx}px "Times New Roman", serif`;
   }
@@ -183,6 +181,7 @@ interface BackgroundConfig {
   gradientStops: { offset: number; color: string }[];
   textColor: string;
   borderColor?: string;
+  isPreset?: boolean; // If true, draw full border around block
 }
 
 /**
@@ -221,32 +220,32 @@ const getBackgroundConfig = (bg: NameBackgroundType): BackgroundConfig => {
     case 'scroll':
       return {
         gradientStops: [
-          { offset: 0, color: 'rgba(210, 180, 140, 0.95)' },
-          { offset: 0.7, color: 'rgba(210, 180, 140, 0.7)' },
-          { offset: 1, color: 'rgba(210, 180, 140, 0)' },
+          { offset: 0, color: 'rgba(45, 40, 35, 0.95)' },
+          { offset: 1, color: 'rgba(45, 40, 35, 0.95)' },
         ],
-        textColor: '#3d2b1f',
-        borderColor: 'rgba(139, 109, 56, 0.6)',
+        textColor: '#f5f0e6',
+        borderColor: 'rgba(160, 135, 85, 0.8)',
+        isPreset: true,
       };
     case 'banner':
       return {
         gradientStops: [
-          { offset: 0, color: 'rgba(80, 20, 20, 0.95)' },
-          { offset: 0.6, color: 'rgba(120, 30, 30, 0.8)' },
-          { offset: 1, color: 'rgba(120, 30, 30, 0)' },
+          { offset: 0, color: 'rgba(70, 25, 25, 0.95)' },
+          { offset: 1, color: 'rgba(70, 25, 25, 0.95)' },
         ],
-        textColor: '#ffffff',
-        borderColor: 'rgba(205, 173, 109, 0.5)',
+        textColor: '#f5f0e6',
+        borderColor: 'rgba(180, 130, 100, 0.8)',
+        isPreset: true,
       };
     case 'shield':
       return {
         gradientStops: [
-          { offset: 0, color: 'rgba(50, 50, 60, 0.95)' },
-          { offset: 0.6, color: 'rgba(70, 70, 80, 0.7)' },
-          { offset: 1, color: 'rgba(70, 70, 80, 0)' },
+          { offset: 0, color: 'rgba(25, 40, 60, 0.95)' },
+          { offset: 1, color: 'rgba(25, 40, 60, 0.95)' },
         ],
-        textColor: '#ffffff',
-        borderColor: 'rgba(150, 150, 160, 0.5)',
+        textColor: '#f5f0e6',
+        borderColor: 'rgba(120, 150, 180, 0.8)',
+        isPreset: true,
       };
     default:
       return {
@@ -333,14 +332,22 @@ const renderNameLabelToDataUrl = (
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, widthPx, heightPx);
   
-  // Draw border at top if applicable
+  // Draw border
   if (config.borderColor) {
     ctx.strokeStyle = config.borderColor;
     ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(0, 1.5);
-    ctx.lineTo(widthPx, 1.5);
-    ctx.stroke();
+    
+    if (config.isPreset) {
+      // Full border for presets
+      const borderInset = 1.5;
+      ctx.strokeRect(borderInset, borderInset, widthPx - borderInset * 2, heightPx - borderInset * 2);
+    } else {
+      // Top border only for gradients
+      ctx.beginPath();
+      ctx.moveTo(0, 1.5);
+      ctx.lineTo(widthPx, 1.5);
+      ctx.stroke();
+    }
   }
   
   // Calculate font size based on block height, start large and scale down if needed
@@ -462,16 +469,32 @@ const drawCharacterName = (
 const drawCutLines = (
   pdf: jsPDF,
   cardsOnPage: number,
-  cardHeight: number
+  cardHeight: number,
+  cardsPerPage: CardsPerPageOption
 ) => {
   pdf.setDrawColor(255, 255, 255); // White
   pdf.setLineWidth(CUT_LINE_WIDTH_MM);
   pdf.setLineDashPattern([], 0); // Solid line
 
-  // Draw horizontal cut lines between cards
-  for (let i = 1; i < cardsOnPage; i++) {
-    const y = i * cardHeight;
-    pdf.line(0, y, A4_WIDTH_MM, y);
+  if (cardsPerPage === 20) {
+    // For 20-card layout: 2 columns × 10 rows
+    const cardWidth = getCardWidth(cardsPerPage);
+    const rowsOnPage = Math.ceil(cardsOnPage / 2);
+    
+    // Draw vertical cut line between columns
+    pdf.line(cardWidth, 0, cardWidth, rowsOnPage * cardHeight);
+    
+    // Draw horizontal cut lines between rows
+    for (let i = 1; i < rowsOnPage; i++) {
+      const y = i * cardHeight;
+      pdf.line(0, y, A4_WIDTH_MM, y);
+    }
+  } else {
+    // Draw horizontal cut lines between cards
+    for (let i = 1; i < cardsOnPage; i++) {
+      const y = i * cardHeight;
+      pdf.line(0, y, A4_WIDTH_MM, y);
+    }
   }
 };
 
@@ -480,7 +503,7 @@ const drawCutLines = (
  * Each card has the image twice - rotated on left, normal on right
  * Cards fill the entire A4 page with white cut lines between them
  * @param cards - Array of character cards to include
- * @param cardsPerPage - Number of cards per page (4 or 5)
+ * @param cardsPerPage - Number of cards per page (4, 5, or 10)
  */
 export const generatePDF = async (
   cards: CharacterCard[],
@@ -496,12 +519,18 @@ export const generatePDF = async (
 
   // Get dimensions based on cards per page
   const cardHeight = getCardHeight(cardsPerPage);
+  const cardWidth = getCardWidth(cardsPerPage);
+  const halfWidth = getHalfWidth(cardsPerPage);
   const halfHeight = getHalfHeight(cardsPerPage);
 
   // High-resolution rendering (300 DPI equivalent)
   const pxPerMm = 10;
-  const halfWidthPx = HALF_WIDTH_MM * pxPerMm;
+  const halfWidthPx = halfWidth * pxPerMm;
   const halfHeightPx = halfHeight * pxPerMm;
+
+  // For 20-card layout: 2 columns × 10 rows
+  const columnsPerPage = cardsPerPage === 20 ? 2 : 1;
+  const rowsPerPage = cardsPerPage === 20 ? 10 : cardsPerPage;
 
   for (let i = 0; i < cards.length; i++) {
     const pageIndex = Math.floor(i / cardsPerPage);
@@ -512,9 +541,21 @@ export const generatePDF = async (
       pdf.addPage();
     }
 
-    // Calculate card position (no margins, cards fill entire page)
-    const x = 0;
-    const y = positionOnPage * cardHeight;
+    // Calculate card position
+    let x: number;
+    let y: number;
+    
+    if (cardsPerPage === 20) {
+      // 2 columns × 10 rows layout
+      const col = positionOnPage % columnsPerPage;
+      const row = Math.floor(positionOnPage / columnsPerPage);
+      x = col * cardWidth;
+      y = row * cardHeight;
+    } else {
+      // Single column layout
+      x = 0;
+      y = positionOnPage * cardHeight;
+    }
 
     // Render both halves of the card
     const [normalDataUrl, rotatedDataUrl] = await Promise.all([
@@ -522,10 +563,10 @@ export const generatePDF = async (
       renderCardHalfToDataUrl(cards[i].imageUrl, halfWidthPx, halfHeightPx, true),
     ]);
 
-    // Inset for border
-    const inset = BORDER_WIDTH_MM + 0.5;
+    // Inset for border (scaled for smaller cards)
+    const inset = cardsPerPage === 20 ? BORDER_WIDTH_MM * 0.6 + 0.3 : BORDER_WIDTH_MM + 0.5;
     // Gap between the two halves (for fold line)
-    const halfGap = 0.8;
+    const halfGap = cardsPerPage === 20 ? 0.4 : 0.8;
 
     // Add left half (rotated - GM side when folded)
     pdf.addImage(
@@ -533,7 +574,7 @@ export const generatePDF = async (
       'JPEG',
       x + inset,
       y + inset,
-      HALF_WIDTH_MM - inset - halfGap,
+      halfWidth - inset - halfGap,
       cardHeight - inset * 2
     );
 
@@ -541,25 +582,25 @@ export const generatePDF = async (
     pdf.addImage(
       normalDataUrl,
       'JPEG',
-      x + HALF_WIDTH_MM + halfGap,
+      x + halfWidth + halfGap,
       y + inset,
-      HALF_WIDTH_MM - inset - halfGap,
+      halfWidth - inset - halfGap,
       cardHeight - inset * 2
     );
 
     // Draw decorative border around entire card
-    drawCardBorder(pdf, x, y, CARD_WIDTH_MM, cardHeight);
+    drawCardBorder(pdf, x, y, cardWidth, cardHeight);
 
     // Draw vertical fold line in the middle
-    drawFoldLine(pdf, x + HALF_WIDTH_MM, y, cardHeight);
+    drawFoldLine(pdf, x + halfWidth, y, cardHeight);
 
     // Draw character name if enabled
     const card = cards[i];
     if (card.nameSettings?.enabled && card.nameSettings.name.trim()) {
       // Draw on GM side (left half)
-      drawCharacterName(pdf, card.nameSettings, x, y, HALF_WIDTH_MM, cardHeight, true);
+      drawCharacterName(pdf, card.nameSettings, x, y, halfWidth, cardHeight, true);
       // Draw on player side (right half)
-      drawCharacterName(pdf, card.nameSettings, x + HALF_WIDTH_MM, y, HALF_WIDTH_MM, cardHeight, false);
+      drawCharacterName(pdf, card.nameSettings, x + halfWidth, y, halfWidth, cardHeight, false);
     }
   }
 
@@ -571,7 +612,7 @@ export const generatePDF = async (
       cardsPerPage,
       cards.length - page * cardsPerPage
     );
-    drawCutLines(pdf, cardsOnThisPage, cardHeight);
+    drawCutLines(pdf, cardsOnThisPage, cardHeight, cardsPerPage);
   }
 
   // Save the PDF with a timestamp

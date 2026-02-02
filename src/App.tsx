@@ -146,6 +146,13 @@ function App() {
                   5 cards
                   <span className="toggle-hint">compact</span>
                 </button>
+                <button
+                  className={`toggle-btn ${cardsPerPage === 20 ? 'active' : ''}`}
+                  onClick={() => setCardsPerPage(20)}
+                >
+                  20 cards
+                  <span className="toggle-hint">mini</span>
+                </button>
               </div>
             </div>
           </section>

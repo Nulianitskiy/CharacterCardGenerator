@@ -583,23 +583,27 @@
 }
 
 .name-bg-scroll {
-  background: linear-gradient(to top, rgba(210, 180, 140, 0.95) 0%, rgba(210, 180, 140, 0.7) 70%, transparent 100%);
-  border-top: 2px solid rgba(139, 109, 56, 0.6);
-}
-
-.name-bg-scroll .name-text {
-  color: #3d2b1f;
-  text-shadow: none;
+  background: rgba(45, 40, 35, 0.95);
+  border: 2px solid var(--gold-muted);
+  border-radius: 3px;
 }
 
 .name-bg-banner {
-  background: linear-gradient(to top, rgba(80, 20, 20, 0.95) 0%, rgba(120, 30, 30, 0.8) 60%, transparent 100%);
-  border-top: 2px solid rgba(205, 173, 109, 0.5);
+  background: rgba(70, 25, 25, 0.95);
+  border: 2px solid rgba(180, 130, 100, 0.8);
+  border-radius: 3px;
 }
 
 .name-bg-shield {
-  background: linear-gradient(to top, rgba(50, 50, 60, 0.95) 0%, rgba(70, 70, 80, 0.7) 60%, transparent 100%);
-  border-top: 2px solid rgba(150, 150, 160, 0.5);
+  background: rgba(25, 40, 60, 0.95);
+  border: 2px solid rgba(120, 150, 180, 0.8);
+  border-radius: 3px;
+}
+
+.name-bg-scroll .name-text,
+.name-bg-banner .name-text,
+.name-bg-shield .name-text {
+  color: var(--cream);
 }
 
 /* Font Styles */
@@ -613,14 +617,6 @@
   font-family: 'Georgia', serif;
   font-style: italic;
   letter-spacing: 0.02em;
-}
-
-.name-font-bold .name-text {
-  font-family: 'Arial Black', sans-serif;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: 0.6rem;
 }
 
 .name-font-fantasy .name-text {
@@ -705,7 +701,7 @@
 /* Font Options */
 .font-options {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.4rem;
 }
 
@@ -740,13 +736,6 @@
 .font-elegant {
   font-family: 'Georgia', serif;
   font-style: italic;
-}
-
-.font-bold {
-  font-family: 'Arial Black', sans-serif;
-  font-weight: 900;
-  text-transform: uppercase;
-  font-size: 0.7rem;
 }
 
 .font-fantasy {
@@ -810,16 +799,18 @@
 }
 
 .bg-preview-scroll {
-  background: linear-gradient(to bottom, #d2b48c, #c4a87a);
-  border-color: rgba(139, 109, 56, 0.6);
+  background: rgba(45, 40, 35, 0.95);
+  border-color: var(--gold-muted);
 }
 
 .bg-preview-banner {
-  background: linear-gradient(to bottom, #8b2020, #501414);
+  background: rgba(70, 25, 25, 0.95);
+  border-color: rgba(180, 130, 100, 0.8);
 }
 
 .bg-preview-shield {
-  background: linear-gradient(to bottom, #5a5a66, #32323c);
+  background: rgba(25, 40, 60, 0.95);
+  border-color: rgba(120, 150, 180, 0.8);
 }
 
 /* Display Side Options */

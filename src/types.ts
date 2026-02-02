@@ -1,7 +1,7 @@
 /**
  * Available font options for character name
  */
-export type FontOption = 'medieval' | 'elegant' | 'bold' | 'fantasy';
+export type FontOption = 'medieval' | 'elegant' | 'fantasy';
 
 /**
  * Name block size options

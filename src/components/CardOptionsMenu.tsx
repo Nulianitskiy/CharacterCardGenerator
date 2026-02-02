@@ -3,7 +3,6 @@ import type { CharacterCard, NameSettings, FontOption, BlockSizeOption, NameBack
 const FONT_OPTIONS: { value: FontOption; label: string }[] = [
   { value: 'medieval', label: 'Medieval' },
   { value: 'elegant', label: 'Elegant' },
-  { value: 'bold', label: 'Bold' },
   { value: 'fantasy', label: 'Fantasy' },
 ];
 
@@ -154,7 +153,7 @@ export function CardOptionsMenu({
               <label className="setting-label">Name</label>
               <input
                 type="text"
-                className="setting-input"
+                className={`setting-input font-${nameSettings.font}`}
                 value={nameSettings.name}
                 onChange={(e) => updateNameSetting('name', e.target.value)}
                 placeholder="Enter character name..."
