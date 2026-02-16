@@ -3,7 +3,7 @@ import { ImageUpload } from './components/ImageUpload';
 import { CardGrid } from './components/CardGrid';
 import { CardOptionsMenu } from './components/CardOptionsMenu';
 import { generatePDF } from './utils/pdfGenerator';
-import type { CharacterCard, NameSettings } from './types';
+import type { CharacterCard, NameSettings, ImageFillMode } from './types';
 import type { CardsPerPageOption } from './constants';
 import './App.css';
 
@@ -40,6 +40,7 @@ function App() {
         ...cardToDuplicate,
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         nameSettings: { ...cardToDuplicate.nameSettings },
+        imageFillMode: cardToDuplicate.imageFillMode ?? 'cover',
       };
 
       const newCards = [...prev];
@@ -84,6 +85,14 @@ function App() {
     setCards((prev) =>
       prev.map((card) =>
         card.id === id ? { ...card, nameSettings: settings } : card
+      )
+    );
+  }, []);
+
+  const handleUpdateImageFillMode = useCallback((id: string, imageFillMode: ImageFillMode) => {
+    setCards((prev) =>
+      prev.map((card) =>
+        card.id === id ? { ...card, imageFillMode } : card
       )
     );
   }, []);
@@ -237,6 +246,7 @@ function App() {
             onPlayerSideClick={handlePlayerSideClick}
             onGmSideClick={handleGmSideClick}
             onUpdateNameSettings={handleUpdateNameSettings}
+            onUpdateImageFillMode={handleUpdateImageFillMode}
             canMoveUp={selectedIndex > 0}
             canMoveDown={selectedIndex < cards.length - 1}
           />

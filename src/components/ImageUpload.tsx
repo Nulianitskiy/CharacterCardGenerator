@@ -39,6 +39,7 @@ export function ImageUpload({ onImagesUploaded }: ImageUploadProps) {
         file,
         imageUrl: URL.createObjectURL(file),
         nameSettings: { ...defaultNameSettings },
+        imageFillMode: 'cover',
       }));
 
       onImagesUploaded(cards);

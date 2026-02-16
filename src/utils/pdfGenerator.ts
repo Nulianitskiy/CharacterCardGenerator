@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import type { CharacterCard, NameSettings, NameBackgroundType, FontOption, BlockSizeOption } from '../types';
+import type { CharacterCard, NameSettings, NameBackgroundType, FontOption, BlockSizeOption, ImageFillMode } from '../types';
 import {
   A4_WIDTH_MM,
   BORDER_WIDTH_MM,
@@ -26,19 +26,21 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
 };
 
 /**
- * Renders a single card half (one image) to a canvas with cover crop and rotation
+ * Renders a single card half (one image) to a canvas with rotation and optional fill mode
  * Images are rotated 90° to fit the horizontal card layout
  * @param imageUrl - URL of the image to render
  * @param widthPx - Target width in pixels
  * @param heightPx - Target height in pixels
  * @param flipForGmSide - If true, rotates +90° (GM side), otherwise -90° (player side)
+ * @param fillMode - cover = crop to fill; fitWidth = scale by width (letterbox top/bottom); fitHeight = scale by height (letterbox left/right)
  * Returns the canvas data URL for embedding in PDF
  */
 const renderCardHalfToDataUrl = async (
   imageUrl: string,
   widthPx: number,
   heightPx: number,
-  flipForGmSide: boolean = false
+  flipForGmSide: boolean = false,
+  fillMode: ImageFillMode = 'cover'
 ): Promise<string> => {
   const img = await loadImage(imageUrl);
   const canvas = document.createElement('canvas');
@@ -46,26 +48,10 @@ const renderCardHalfToDataUrl = async (
   canvas.height = heightPx;
   const ctx = canvas.getContext('2d')!;
 
-  // For cover crop with rotation, we need to think of the image as rotated
-  // The target area is widthPx x heightPx, but the image will be drawn rotated
-  // So we calculate crop based on the rotated dimensions
-  const imgAspect = img.width / img.height;
-  // After 90° rotation, the target aspect ratio is inverted for cropping calculation
-  const targetAspect = heightPx / widthPx;
-
-  let srcX = 0;
-  let srcY = 0;
-  let srcWidth = img.width;
-  let srcHeight = img.height;
-
-  if (imgAspect > targetAspect) {
-    // Image is wider - crop sides
-    srcWidth = img.height * targetAspect;
-    srcX = (img.width - srcWidth) / 2;
-  } else {
-    // Image is taller - crop top/bottom
-    srcHeight = img.width / targetAspect;
-    srcY = (img.height - srcHeight) / 2;
+  // For fit modes, fill with white so letterbox areas are white (JPEG has no transparency)
+  if (fillMode !== 'cover') {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, widthPx, heightPx);
   }
 
   // Apply rotation: -90° for player side (right), +90° for GM side (left)
@@ -75,12 +61,47 @@ const renderCardHalfToDataUrl = async (
   } else {
     ctx.rotate(-Math.PI / 2); // -90 degrees (player/right side)
   }
-  // After rotation, we draw centered at origin with swapped dimensions
-  ctx.drawImage(
-    img,
-    srcX, srcY, srcWidth, srcHeight,
-    -heightPx / 2, -widthPx / 2, heightPx, widthPx
-  );
+
+  // After rotation: canvas x = card "vertical" (heightPx), canvas y = card "horizontal" (widthPx)
+  if (fillMode === 'cover') {
+    // Crop source to match target aspect (heightPx : widthPx in rotated space)
+    const imgAspect = img.width / img.height;
+    const targetAspect = heightPx / widthPx;
+    let srcX = 0;
+    let srcY = 0;
+    let srcWidth = img.width;
+    let srcHeight = img.height;
+    if (imgAspect > targetAspect) {
+      srcWidth = img.height * targetAspect;
+      srcX = (img.width - srcWidth) / 2;
+    } else {
+      srcHeight = img.width / targetAspect;
+      srcY = (img.height - srcHeight) / 2;
+    }
+    ctx.drawImage(
+      img,
+      srcX, srcY, srcWidth, srcHeight,
+      -heightPx / 2, -widthPx / 2, heightPx, widthPx
+    );
+  } else if (fillMode === 'fitHeight') {
+    // Scale so that image height (→ vertical) fills heightPx; letterbox left/right
+    const scale = heightPx / img.width;
+    const drawHeight = img.height * scale;
+    ctx.drawImage(
+      img,
+      0, 0, img.width, img.height,
+      -heightPx / 2, -drawHeight / 2, heightPx, drawHeight
+    );
+  } else {
+    // fitWidth: scale so that image width (→ horizontal) fills widthPx; letterbox top/bottom
+    const scale = widthPx / img.height;
+    const drawWidth = img.width * scale;
+    ctx.drawImage(
+      img,
+      0, 0, img.width, img.height,
+      -drawWidth / 2, -widthPx / 2, drawWidth, widthPx
+    );
+  }
 
   return canvas.toDataURL('image/jpeg', 0.92);
 };
@@ -558,9 +579,10 @@ export const generatePDF = async (
     }
 
     // Render both halves of the card
+    const fillMode = cards[i].imageFillMode ?? 'cover';
     const [normalDataUrl, rotatedDataUrl] = await Promise.all([
-      renderCardHalfToDataUrl(cards[i].imageUrl, halfWidthPx, halfHeightPx, false),
-      renderCardHalfToDataUrl(cards[i].imageUrl, halfWidthPx, halfHeightPx, true),
+      renderCardHalfToDataUrl(cards[i].imageUrl, halfWidthPx, halfHeightPx, false, fillMode),
+      renderCardHalfToDataUrl(cards[i].imageUrl, halfWidthPx, halfHeightPx, true, fillMode),
     ]);
 
     // Inset for border (scaled for smaller cards)

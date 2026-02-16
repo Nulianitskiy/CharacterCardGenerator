@@ -844,6 +844,37 @@
   color: var(--gold);
 }
 
+/* Image fill mode options */
+.fill-mode-options {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.fill-mode-option {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(205, 173, 109, 0.3);
+  background: rgba(20, 17, 12, 0.6);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.fill-mode-option:hover {
+  border-color: var(--gold);
+  background: rgba(205, 173, 109, 0.1);
+}
+
+.fill-mode-option.active {
+  border-color: var(--gold);
+  background: rgba(205, 173, 109, 0.2);
+  color: var(--gold);
+}
+
 /* Block Size Options */
 .block-size-options {
   display: flex;

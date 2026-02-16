@@ -1,4 +1,4 @@
-import type { CharacterCard, NameSettings, FontOption, BlockSizeOption, NameBackgroundType, NameDisplaySide } from '../types';
+import type { CharacterCard, NameSettings, FontOption, BlockSizeOption, NameBackgroundType, NameDisplaySide, ImageFillMode } from '../types';
 
 const FONT_OPTIONS: { value: FontOption; label: string }[] = [
   { value: 'medieval', label: 'Medieval' },
@@ -27,6 +27,12 @@ const DISPLAY_SIDE_OPTIONS: { value: NameDisplaySide; label: string }[] = [
   { value: 'both', label: 'Both' },
 ];
 
+const IMAGE_FILL_OPTIONS: { value: ImageFillMode; label: string }[] = [
+  { value: 'cover', label: 'Fill (crop)' },
+  { value: 'fitWidth', label: 'Fit width' },
+  { value: 'fitHeight', label: 'Fit height' },
+];
+
 interface CardOptionsMenuProps {
   card: CharacterCard;
   onClose: () => void;
@@ -37,6 +43,7 @@ interface CardOptionsMenuProps {
   onPlayerSideClick: (id: string) => void;
   onGmSideClick: (id: string) => void;
   onUpdateNameSettings: (id: string, settings: NameSettings) => void;
+  onUpdateImageFillMode: (id: string, mode: ImageFillMode) => void;
   canMoveUp: boolean;
   canMoveDown: boolean;
 }
@@ -54,10 +61,11 @@ export function CardOptionsMenu({
   onPlayerSideClick,
   onGmSideClick,
   onUpdateNameSettings,
+  onUpdateImageFillMode,
   canMoveUp,
   canMoveDown,
 }: CardOptionsMenuProps) {
-  const { nameSettings } = card;
+  const { nameSettings, imageFillMode = 'cover' } = card;
 
   const handleRemove = () => {
     URL.revokeObjectURL(card.imageUrl);
@@ -133,6 +141,25 @@ export function CardOptionsMenu({
               )}
             </div>
           </button>
+        </div>
+      </div>
+
+      {/* Image fill mode */}
+      <div className="options-section">
+        <div className="setting-row">
+          <label className="setting-label">Image fill</label>
+          <div className="fill-mode-options">
+            {IMAGE_FILL_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={`fill-mode-option ${imageFillMode === option.value ? 'active' : ''}`}
+                onClick={() => onUpdateImageFillMode(card.id, option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

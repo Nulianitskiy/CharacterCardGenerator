@@ -19,6 +19,11 @@ export type NameBackgroundType = 'gradient-dark' | 'gradient-gold' | 'gradient-r
 export type NameDisplaySide = 'player' | 'gm' | 'both';
 
 /**
+ * How the image fills the card area: cover (crop to fill), fit by width, or fit by height
+ */
+export type ImageFillMode = 'cover' | 'fitWidth' | 'fitHeight';
+
+/**
  * Settings for the character name display
  */
 export interface NameSettings {
@@ -38,6 +43,8 @@ export interface CharacterCard {
   file: File;
   imageUrl: string;
   nameSettings: NameSettings;
+  /** How to fit the image inside the card half (default: cover) */
+  imageFillMode?: ImageFillMode;
 }
 
 /**
