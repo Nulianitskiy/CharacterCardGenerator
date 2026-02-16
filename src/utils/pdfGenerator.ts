@@ -551,7 +551,6 @@ export const generatePDF = async (
 
   // For 20-card layout: 2 columns × 10 rows
   const columnsPerPage = cardsPerPage === 20 ? 2 : 1;
-  const rowsPerPage = cardsPerPage === 20 ? 10 : cardsPerPage;
 
   for (let i = 0; i < cards.length; i++) {
     const pageIndex = Math.floor(i / cardsPerPage);
