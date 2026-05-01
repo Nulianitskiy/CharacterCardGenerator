@@ -1,4 +1,5 @@
 import type { CharacterCard, NameSettings, FontOption, BlockSizeOption, NameBackgroundType, NameDisplaySide, ImageFillMode } from '../types';
+import { FilledCharacterImage } from './FilledCharacterImage';
 
 const FONT_OPTIONS: { value: FontOption; label: string }[] = [
   { value: 'medieval', label: 'Medieval' },
@@ -109,9 +110,10 @@ export function CardOptionsMenu({
           >
             <span className="side-label">Player Side</span>
             <div className="side-image-container">
-              <img
+              <FilledCharacterImage
                 src={card.imageUrl}
                 alt="Player side"
+                imageFillMode={imageFillMode}
                 className="side-image"
               />
               {showNameOnSide('player') && (
@@ -129,9 +131,10 @@ export function CardOptionsMenu({
           >
             <span className="side-label">GM Side</span>
             <div className="side-image-container">
-              <img
+              <FilledCharacterImage
                 src={card.imageUrl}
                 alt="GM side"
+                imageFillMode={imageFillMode}
                 className="side-image"
               />
               {showNameOnSide('gm') && (

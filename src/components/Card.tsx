@@ -1,4 +1,5 @@
 import type { CharacterCard } from '../types';
+import { FilledCharacterImage } from './FilledCharacterImage';
 
 interface CardProps {
   card: CharacterCard;
@@ -26,7 +27,13 @@ export function Card({ card, onRemove, onSelect, isSelected }: CardProps) {
       className={`card ${isSelected ? 'card-selected' : ''}`}
       onClick={handleClick}
     >
-      <img src={card.imageUrl} alt="Character" className="card-image" />
+      <FilledCharacterImage
+        src={card.imageUrl}
+        alt="Character"
+        imageFillMode={card.imageFillMode}
+        className="card-image"
+        wrapperClassName="card-image-wrap"
+      />
       <button
         className="card-remove"
         onClick={handleRemove}

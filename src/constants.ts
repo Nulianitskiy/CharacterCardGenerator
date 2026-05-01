@@ -13,12 +13,20 @@ export type CardsPerPageOption = 4 | 5 | 20;
 // Cut line width (white lines between cards for cutting guide)
 export const CUT_LINE_WIDTH_MM = 0.5;
 
-// No margins - cards fill entire page
-export const PAGE_MARGIN_Y_MM = 0;
-export const PAGE_MARGIN_X_MM = 0;
+/** Top and bottom margins on PDF (1 cm each) */
+export const PAGE_MARGIN_Y_MM = 10;
 
-// Card width is always full page width
-export const CARD_WIDTH_MM = A4_WIDTH_MM; // 210mm
+/** Side margins on PDF (1 cm each) */
+export const PAGE_MARGIN_X_MM = 10;
+
+/** Usable width for cards between left and right margins */
+export const CONTENT_WIDTH_MM = A4_WIDTH_MM - 2 * PAGE_MARGIN_X_MM;
+
+/** Usable height for cards between top and bottom margins */
+export const CONTENT_HEIGHT_MM = A4_HEIGHT_MM - 2 * PAGE_MARGIN_Y_MM;
+
+// Card width matches content area (not full A4 width)
+export const CARD_WIDTH_MM = CONTENT_WIDTH_MM;
 
 /**
  * Calculate card height based on cards per page
@@ -26,15 +34,15 @@ export const CARD_WIDTH_MM = A4_WIDTH_MM; // 210mm
  */
 export const getCardHeight = (cardsPerPage: CardsPerPageOption): number => {
   if (cardsPerPage === 20) {
-    return A4_HEIGHT_MM / 5 / 2; // Half the height of 5-card layout (same size, just more per page)
+    return CONTENT_HEIGHT_MM / 5 / 2;
   }
-  return A4_HEIGHT_MM / cardsPerPage;
+  return CONTENT_HEIGHT_MM / cardsPerPage;
 };
 
-// Default card heights for each layout
-export const CARD_HEIGHT_5_MM = A4_HEIGHT_MM / 5; // 59.4mm
-export const CARD_HEIGHT_4_MM = A4_HEIGHT_MM / 4; // 74.25mm
-export const CARD_HEIGHT_20_MM = CARD_HEIGHT_5_MM / 2; // 29.7mm (half of 5-card)
+// Default card heights for each layout (within vertical margins)
+export const CARD_HEIGHT_5_MM = CONTENT_HEIGHT_MM / 5;
+export const CARD_HEIGHT_4_MM = CONTENT_HEIGHT_MM / 4;
+export const CARD_HEIGHT_20_MM = CARD_HEIGHT_5_MM / 2;
 
 // Card width (full page width for 4/5 cards, half for 20 cards)
 export const getCardWidth = (cardsPerPage: CardsPerPageOption): number => {
@@ -45,7 +53,7 @@ export const getCardWidth = (cardsPerPage: CardsPerPageOption): number => {
 };
 
 // Half card width (each image section - left and right halves)
-export const HALF_WIDTH_MM = CARD_WIDTH_MM / 2; // 105mm
+export const HALF_WIDTH_MM = CARD_WIDTH_MM / 2;
 
 /**
  * Get half width based on cards per page (for each image section within a card)

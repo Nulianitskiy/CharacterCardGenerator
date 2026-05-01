@@ -382,11 +382,25 @@
     0 0 16px rgba(205, 173, 109, 0.25);
 }
 
-.card-image {
+.filled-image-wrap {
+  position: relative;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  overflow: hidden;
+}
+
+.filled-image-wrap-letterbox {
+  background: #ffffff;
+}
+
+.card-image-wrap {
+  position: absolute;
+  inset: 0;
+}
+
+.card-image {
   display: block;
+  max-width: none;
 }
 
 .card-remove {
@@ -515,10 +529,8 @@
 }
 
 .side-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
   display: block;
+  max-width: none;
 }
 
 /* Name Overlay on Preview */

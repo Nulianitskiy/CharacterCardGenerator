@@ -1,11 +1,12 @@
 import jsPDF from 'jspdf';
 import type { CharacterCard, NameSettings, NameBackgroundType, FontOption, BlockSizeOption, ImageFillMode } from '../types';
 import {
-  A4_WIDTH_MM,
   BORDER_WIDTH_MM,
   CUT_LINE_WIDTH_MM,
   FOLD_LINE_WIDTH_MM,
   FOLD_LINE_DASH_MM,
+  PAGE_MARGIN_X_MM,
+  PAGE_MARGIN_Y_MM,
   getCardHeight,
   getCardWidth,
   getHalfWidth,
@@ -497,24 +498,28 @@ const drawCutLines = (
   pdf.setLineWidth(CUT_LINE_WIDTH_MM);
   pdf.setLineDashPattern([], 0); // Solid line
 
+  const mx = PAGE_MARGIN_X_MM;
+  const my = PAGE_MARGIN_Y_MM;
+
   if (cardsPerPage === 20) {
-    // For 20-card layout: 2 columns × 10 rows
     const cardWidth = getCardWidth(cardsPerPage);
     const rowsOnPage = Math.ceil(cardsOnPage / 2);
-    
-    // Draw vertical cut line between columns
-    pdf.line(cardWidth, 0, cardWidth, rowsOnPage * cardHeight);
-    
-    // Draw horizontal cut lines between rows
+    const contentRight = mx + 2 * cardWidth;
+    const contentBottom = my + rowsOnPage * cardHeight;
+
+    pdf.line(mx + cardWidth, my, mx + cardWidth, contentBottom);
+
     for (let i = 1; i < rowsOnPage; i++) {
-      const y = i * cardHeight;
-      pdf.line(0, y, A4_WIDTH_MM, y);
+      const y = my + i * cardHeight;
+      pdf.line(mx, y, contentRight, y);
     }
   } else {
-    // Draw horizontal cut lines between cards
+    const cardWidth = getCardWidth(cardsPerPage);
+    const contentRight = mx + cardWidth;
+
     for (let i = 1; i < cardsOnPage; i++) {
-      const y = i * cardHeight;
-      pdf.line(0, y, A4_WIDTH_MM, y);
+      const y = my + i * cardHeight;
+      pdf.line(mx, y, contentRight, y);
     }
   }
 };
@@ -522,7 +527,7 @@ const drawCutLines = (
 /**
  * Generates a PDF document with all foldable character cards laid out horizontally
  * Each card has the image twice - rotated on left, normal on right
- * Cards fill the entire A4 page with white cut lines between them
+ * Cards use the area inside 1 cm margins on all sides; white cut lines run within that area
  * @param cards - Array of character cards to include
  * @param cardsPerPage - Number of cards per page (4, 5, or 10)
  */
@@ -566,15 +571,13 @@ export const generatePDF = async (
     let y: number;
     
     if (cardsPerPage === 20) {
-      // 2 columns × 10 rows layout
       const col = positionOnPage % columnsPerPage;
       const row = Math.floor(positionOnPage / columnsPerPage);
-      x = col * cardWidth;
-      y = row * cardHeight;
+      x = PAGE_MARGIN_X_MM + col * cardWidth;
+      y = PAGE_MARGIN_Y_MM + row * cardHeight;
     } else {
-      // Single column layout
-      x = 0;
-      y = positionOnPage * cardHeight;
+      x = PAGE_MARGIN_X_MM;
+      y = PAGE_MARGIN_Y_MM + positionOnPage * cardHeight;
     }
 
     // Render both halves of the card
