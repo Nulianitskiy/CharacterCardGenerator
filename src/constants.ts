@@ -8,7 +8,7 @@ export const A4_WIDTH_MM = 210;
 export const A4_HEIGHT_MM = 297;
 
 // Layout options
-export type CardsPerPageOption = 4 | 5 | 20;
+export type CardsPerPageOption = 4 | 20;
 
 // Cut line width (white lines between cards for cutting guide)
 export const CUT_LINE_WIDTH_MM = 0.5;
@@ -30,21 +30,20 @@ export const CARD_WIDTH_MM = CONTENT_WIDTH_MM;
 
 /**
  * Calculate card height based on cards per page
- * For 20 cards: 2 columns × 10 rows, each card is half size of 5-card layout
+ * For 20 cards: 2 columns × 10 rows
  */
 export const getCardHeight = (cardsPerPage: CardsPerPageOption): number => {
   if (cardsPerPage === 20) {
-    return CONTENT_HEIGHT_MM / 5 / 2;
+    return CONTENT_HEIGHT_MM / 10;
   }
-  return CONTENT_HEIGHT_MM / cardsPerPage;
+  return CONTENT_HEIGHT_MM / 4;
 };
 
 // Default card heights for each layout (within vertical margins)
-export const CARD_HEIGHT_5_MM = CONTENT_HEIGHT_MM / 5;
 export const CARD_HEIGHT_4_MM = CONTENT_HEIGHT_MM / 4;
-export const CARD_HEIGHT_20_MM = CARD_HEIGHT_5_MM / 2;
+export const CARD_HEIGHT_20_MM = CONTENT_HEIGHT_MM / 10;
 
-// Card width (full page width for 4/5 cards, half for 20 cards)
+// Card width (full page width for 4 cards, half for 20 cards)
 export const getCardWidth = (cardsPerPage: CardsPerPageOption): number => {
   if (cardsPerPage === 20) {
     return CARD_WIDTH_MM / 2; // Half width for 20-card layout (2 columns)
@@ -69,22 +68,13 @@ export const getHalfHeight = (cardsPerPage: CardsPerPageOption): number => {
   return getCardHeight(cardsPerPage);
 };
 
-// Card aspect ratio for CSS (using 5 cards as default for preview)
-export const CARD_ASPECT_RATIO_5 = CARD_WIDTH_MM / CARD_HEIGHT_5_MM;
 export const CARD_ASPECT_RATIO_4 = CARD_WIDTH_MM / CARD_HEIGHT_4_MM;
 
 // Preview card dimensions in pixels (for screen display)
 export const PREVIEW_CARD_WIDTH_PX = 340;
-export const PREVIEW_CARD_HEIGHT_5_PX = Math.round(
-  PREVIEW_CARD_WIDTH_PX / CARD_ASPECT_RATIO_5
-);
 export const PREVIEW_CARD_HEIGHT_4_PX = Math.round(
   PREVIEW_CARD_WIDTH_PX / CARD_ASPECT_RATIO_4
 );
-
-// Border width in mm for PDF and pixels for preview
-export const BORDER_WIDTH_MM = 1.0;
-export const BORDER_WIDTH_PX = 2;
 
 // Fold line settings
 export const FOLD_LINE_WIDTH_MM = 0.3;

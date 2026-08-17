@@ -1,10 +1,17 @@
 import type { CharacterCard, NameSettings, FontOption, BlockSizeOption, NameBackgroundType, NameDisplaySide, ImageFillMode } from '../types';
 import { FilledCharacterImage } from './FilledCharacterImage';
+import { PresetOverlay } from './PresetOverlay';
+import { getPresetOverlay, isPresetBackground } from '../utils/presetOverlays';
 
 const FONT_OPTIONS: { value: FontOption; label: string }[] = [
-  { value: 'medieval', label: 'Средневековый' },
-  { value: 'elegant', label: 'Элегантный' },
-  { value: 'fantasy', label: 'Фэнтези' },
+  { value: 'medieval', label: 'Old Standard TT' },
+  { value: 'elegant', label: 'Georgia' },
+  { value: 'fantasy', label: 'Times New Roman' },
+  { value: 'royal', label: 'Arial' },
+  { value: 'script', label: 'Verdana' },
+  { value: 'ancient', label: 'Trebuchet MS' },
+  { value: 'inscription', label: 'Palatino' },
+  { value: 'bold', label: 'Courier New' },
 ];
 
 const BLOCK_SIZE_OPTIONS: { value: BlockSizeOption; label: string }[] = [
@@ -13,13 +20,29 @@ const BLOCK_SIZE_OPTIONS: { value: BlockSizeOption; label: string }[] = [
   { value: 'large', label: 'L' },
 ];
 
-const BACKGROUND_OPTIONS: { value: NameBackgroundType; label: string; type: 'gradient' | 'preset' }[] = [
-  { value: 'gradient-dark', label: 'Тёмный', type: 'gradient' },
-  { value: 'gradient-gold', label: 'Золотой', type: 'gradient' },
-  { value: 'gradient-red', label: 'Красный', type: 'gradient' },
-  { value: 'scroll', label: 'Свиток', type: 'preset' },
-  { value: 'banner', label: 'Знамя', type: 'preset' },
-  { value: 'shield', label: 'Щит', type: 'preset' },
+const BACKGROUND_OPTIONS: {
+  value: NameBackgroundType;
+  label: string;
+  group: 'full' | 'lower';
+}[] = [
+  { value: 'sketch', label: 'Гравюра', group: 'full' },
+  { value: 'gothic', label: 'Готический', group: 'full' },
+  { value: 'celestial', label: 'Небесный', group: 'full' },
+  { value: 'forest', label: 'Лесной', group: 'full' },
+  { value: 'arcane', label: 'Арканический', group: 'full' },
+  { value: 'infernal', label: 'Инфернальный', group: 'full' },
+  { value: 'frost', label: 'Ледяной', group: 'full' },
+  { value: 'dwarven', label: 'Дворфийский', group: 'full' },
+  { value: 'steampunk', label: 'Стимпанк', group: 'full' },
+  { value: 'nautical', label: 'Морской', group: 'full' },
+  { value: 'lower-tavern', label: 'Таверна', group: 'lower' },
+  { value: 'lower-alchemist', label: 'Алхимия', group: 'lower' },
+  { value: 'lower-parchment', label: 'Пергамент', group: 'lower' },
+  { value: 'lower-silver', label: 'Классическая', group: 'lower' },
+  { value: 'lower-arcane', label: 'Магическая', group: 'lower' },
+  { value: 'lower-royal', label: 'Королевская', group: 'lower' },
+  { value: 'lower-wild', label: 'Дикая природа', group: 'lower' },
+  { value: 'lower-infernal', label: 'Инфернальная', group: 'lower' },
 ];
 
 const DISPLAY_SIDE_OPTIONS: { value: NameDisplaySide; label: string }[] = [
@@ -109,14 +132,22 @@ export function CardOptionsMenu({
             aria-label="Редактировать сторону игрока"
           >
             <span className="side-label">Сторона игрока</span>
-            <div className="side-image-container">
+            <div className={`side-image-container ${showNameOnSide('player') && isPresetBackground(nameSettings.background) ? 'has-preset' : ''}`}>
               <FilledCharacterImage
                 src={card.imageUrl}
                 alt="Сторона игрока"
                 imageFillMode={imageFillMode}
                 className="side-image"
               />
-              {showNameOnSide('player') && (
+              {showNameOnSide('player') && isPresetBackground(nameSettings.background) && (
+                <PresetOverlay
+                  preset={nameSettings.background}
+                  name={nameSettings.name}
+                  font={nameSettings.font}
+                  blockSize={nameSettings.blockSize}
+                />
+              )}
+              {showNameOnSide('player') && !isPresetBackground(nameSettings.background) && (
                 <div className={`name-overlay name-bg-${nameSettings.background} name-font-${nameSettings.font} name-block-${nameSettings.blockSize}`}>
                   <span className="name-text">{nameSettings.name}</span>
                 </div>
@@ -130,14 +161,22 @@ export function CardOptionsMenu({
             aria-label="Редактировать сторону мастера"
           >
             <span className="side-label">Сторона мастера</span>
-            <div className="side-image-container">
+            <div className={`side-image-container ${showNameOnSide('gm') && isPresetBackground(nameSettings.background) ? 'has-preset' : ''}`}>
               <FilledCharacterImage
                 src={card.imageUrl}
                 alt="Сторона мастера"
                 imageFillMode={imageFillMode}
                 className="side-image"
               />
-              {showNameOnSide('gm') && (
+              {showNameOnSide('gm') && isPresetBackground(nameSettings.background) && (
+                <PresetOverlay
+                  preset={nameSettings.background}
+                  name={nameSettings.name}
+                  font={nameSettings.font}
+                  blockSize={nameSettings.blockSize}
+                />
+              )}
+              {showNameOnSide('gm') && !isPresetBackground(nameSettings.background) && (
                 <div className={`name-overlay name-bg-${nameSettings.background} name-font-${nameSettings.font} name-block-${nameSettings.blockSize}`}>
                   <span className="name-text">{nameSettings.name}</span>
                 </div>
@@ -224,27 +263,33 @@ export function CardOptionsMenu({
               <label className="setting-label">Фон</label>
               <div className="background-options">
                 <div className="bg-group">
-                  <span className="bg-group-label">Градиенты</span>
+                  <span className="bg-group-label">Полноразмерные рамки</span>
                   <div className="bg-buttons">
-                    {BACKGROUND_OPTIONS.filter(bg => bg.type === 'gradient').map((bg) => (
+                    {BACKGROUND_OPTIONS.filter(bg => bg.group === 'full').map((bg) => (
                       <button
                         key={bg.value}
-                        className={`bg-option bg-preview-${bg.value} ${nameSettings.background === bg.value ? 'active' : ''}`}
+                        className={`bg-option bg-option-preset ${nameSettings.background === bg.value ? 'active' : ''}`}
                         onClick={() => updateNameSetting('background', bg.value)}
                         title={bg.label}
+                        style={{
+                          backgroundImage: `url("${getPresetOverlay(bg.value)?.src ?? ''}")`,
+                        }}
                       />
                     ))}
                   </div>
                 </div>
                 <div className="bg-group">
-                  <span className="bg-group-label">Пресеты</span>
+                  <span className="bg-group-label">Нижние плашки</span>
                   <div className="bg-buttons">
-                    {BACKGROUND_OPTIONS.filter(bg => bg.type === 'preset').map((bg) => (
+                    {BACKGROUND_OPTIONS.filter(bg => bg.group === 'lower').map((bg) => (
                       <button
                         key={bg.value}
-                        className={`bg-option bg-preview-${bg.value} ${nameSettings.background === bg.value ? 'active' : ''}`}
+                        className={`bg-option bg-option-preset ${nameSettings.background === bg.value ? 'active' : ''}`}
                         onClick={() => updateNameSetting('background', bg.value)}
                         title={bg.label}
+                        style={{
+                          backgroundImage: `url("${getPresetOverlay(bg.value)?.src ?? ''}")`,
+                        }}
                       />
                     ))}
                   </div>

@@ -1,7 +1,15 @@
 /**
  * Available font options for character name
  */
-export type FontOption = 'medieval' | 'elegant' | 'fantasy';
+export type FontOption =
+  | 'medieval'
+  | 'elegant'
+  | 'fantasy'
+  | 'royal'
+  | 'script'
+  | 'ancient'
+  | 'inscription'
+  | 'bold';
 
 /**
  * Name block size options
@@ -11,7 +19,32 @@ export type BlockSizeOption = 'small' | 'medium' | 'large';
 /**
  * Background style options for the name label
  */
-export type NameBackgroundType = 'gradient-dark' | 'gradient-gold' | 'gradient-red' | 'scroll' | 'banner' | 'shield';
+export type NameBackgroundType =
+  | 'gradient-dark'
+  | 'gradient-gold'
+  | 'gradient-red'
+  | 'gradient-emerald'
+  | 'gradient-arcane'
+  | 'gradient-ice'
+  | 'gradient-fire'
+  | 'sketch'
+  | 'gothic'
+  | 'celestial'
+  | 'forest'
+  | 'arcane'
+  | 'infernal'
+  | 'frost'
+  | 'dwarven'
+  | 'steampunk'
+  | 'nautical'
+  | 'lower-tavern'
+  | 'lower-alchemist'
+  | 'lower-parchment'
+  | 'lower-silver'
+  | 'lower-arcane'
+  | 'lower-royal'
+  | 'lower-wild'
+  | 'lower-infernal';
 
 /**
  * Which side of the card to display the name on
@@ -54,7 +87,7 @@ export const defaultNameSettings: NameSettings = {
   enabled: false,
   name: '',
   font: 'medieval',
-  blockSize: 'medium',
-  background: 'gradient-dark',
+  blockSize: 'large',
+  background: 'gothic',
   displaySide: 'player',
 };

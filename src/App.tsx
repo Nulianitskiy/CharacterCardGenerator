@@ -19,7 +19,7 @@ function pluralRu(n: number, one: string, few: string, many: string): string {
 function App() {
   const [cards, setCards] = useState<CharacterCard[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [cardsPerPage, setCardsPerPage] = useState<CardsPerPageOption>(5);
+  const [cardsPerPage, setCardsPerPage] = useState<CardsPerPageOption>(4);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const pdfUrlRef = useRef<string | null>(null);
 
@@ -201,13 +201,6 @@ function App() {
                 >
                   4 карточки
                   <span className="toggle-hint">крупнее</span>
-                </button>
-                <button
-                  className={`toggle-btn ${cardsPerPage === 5 ? 'active' : ''}`}
-                  onClick={() => setCardsPerPage(5)}
-                >
-                  5 карточек
-                  <span className="toggle-hint">компактно</span>
                 </button>
                 <button
                   className={`toggle-btn ${cardsPerPage === 20 ? 'active' : ''}`}

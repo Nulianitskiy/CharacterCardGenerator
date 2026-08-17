@@ -1,7 +1,6 @@
 import jsPDF from 'jspdf';
-import type { CharacterCard, NameSettings, NameBackgroundType, FontOption, BlockSizeOption, ImageFillMode } from '../types';
+import type { CharacterCard, NameSettings, ImageFillMode } from '../types';
 import {
-  BORDER_WIDTH_MM,
   CUT_LINE_WIDTH_MM,
   FOLD_LINE_WIDTH_MM,
   FOLD_LINE_DASH_MM,
@@ -13,6 +12,9 @@ import {
   getHalfHeight,
   type CardsPerPageOption,
 } from '../constants';
+import { ensureNameFontsLoaded, renderNameLabelToDataUrl, drawFittedName } from './nameLabelRender';
+import { getPresetOverlay, isPresetBackground } from './presetOverlays';
+import { layoutImageFill } from './imageFillLayout';
 
 /**
  * Loads an image from a URL and returns it as an HTMLImageElement
@@ -26,123 +28,95 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
   });
 };
 
-/**
- * Renders a single card half (one image) to a canvas with rotation and optional fill mode
- * Images are rotated 90° to fit the horizontal card layout
- * @param imageUrl - URL of the image to render
- * @param widthPx - Target width in pixels
- * @param heightPx - Target height in pixels
- * @param flipForGmSide - If true, rotates +90° (GM side), otherwise -90° (player side)
- * @param fillMode - cover = crop to fill; fitWidth = scale by width (letterbox top/bottom); fitHeight = scale by height (letterbox left/right)
- * Returns the canvas data URL for embedding in PDF
- */
+const overlayImageCache = new Map<string, HTMLImageElement>();
+
+const loadOverlayImage = async (src: string): Promise<HTMLImageElement> => {
+  const cached = overlayImageCache.get(src);
+  if (cached) return cached;
+  const img = await loadImage(src);
+  overlayImageCache.set(src, img);
+  return img;
+};
+
 const renderCardHalfToDataUrl = async (
   imageUrl: string,
   widthPx: number,
   heightPx: number,
   flipForGmSide: boolean = false,
-  fillMode: ImageFillMode = 'cover'
+  fillMode: ImageFillMode = 'cover',
+  nameSettings?: NameSettings
 ): Promise<string> => {
   const img = await loadImage(imageUrl);
-  const canvas = document.createElement('canvas');
-  canvas.width = widthPx;
-  canvas.height = heightPx;
-  const ctx = canvas.getContext('2d')!;
+  const portraitWidth = heightPx;
+  const portraitHeight = widthPx;
+  const portraitCanvas = document.createElement('canvas');
+  portraitCanvas.width = portraitWidth;
+  portraitCanvas.height = portraitHeight;
+  const portraitCtx = portraitCanvas.getContext('2d')!;
 
-  // For fit modes, fill with white so letterbox areas are white (JPEG has no transparency)
   if (fillMode !== 'cover') {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, widthPx, heightPx);
+    portraitCtx.fillStyle = '#ffffff';
+    portraitCtx.fillRect(0, 0, portraitWidth, portraitHeight);
   }
 
-  // Apply rotation: -90° for player side (right), +90° for GM side (left)
-  ctx.translate(widthPx / 2, heightPx / 2);
-  if (flipForGmSide) {
-    ctx.rotate(Math.PI / 2); // +90 degrees (GM/left side)
-  } else {
-    ctx.rotate(-Math.PI / 2); // -90 degrees (player/right side)
-  }
+  const layout = layoutImageFill(
+    fillMode,
+    portraitWidth,
+    portraitHeight,
+    img.width,
+    img.height
+  );
+  portraitCtx.drawImage(img, layout.left, layout.top, layout.width, layout.height);
 
-  // After rotation: canvas x = card "vertical" (heightPx), canvas y = card "horizontal" (widthPx)
-  if (fillMode === 'cover') {
-    // Crop source to match target aspect (heightPx : widthPx in rotated space)
-    const imgAspect = img.width / img.height;
-    const targetAspect = heightPx / widthPx;
-    let srcX = 0;
-    let srcY = 0;
-    let srcWidth = img.width;
-    let srcHeight = img.height;
-    if (imgAspect > targetAspect) {
-      srcWidth = img.height * targetAspect;
-      srcX = (img.width - srcWidth) / 2;
-    } else {
-      srcHeight = img.width / targetAspect;
-      srcY = (img.height - srcHeight) / 2;
+  const side = flipForGmSide ? 'gm' : 'player';
+  const shouldShowName =
+    nameSettings?.enabled &&
+    (nameSettings.displaySide === side || nameSettings.displaySide === 'both');
+
+  if (shouldShowName && nameSettings) {
+    const overlay = getPresetOverlay(nameSettings.background);
+    if (overlay) {
+      const frame = await loadOverlayImage(overlay.src);
+      portraitCtx.drawImage(frame, 0, 0, portraitWidth, portraitHeight);
+      if (nameSettings.name.trim()) {
+        const nx = overlay.nameBox.x * portraitWidth;
+        const ny = overlay.nameBox.y * portraitHeight;
+        const nw = overlay.nameBox.w * portraitWidth;
+        const nh = overlay.nameBox.h * portraitHeight;
+        drawFittedName(
+          portraitCtx,
+          nameSettings.name,
+          nameSettings.font,
+          nx,
+          ny,
+          nw,
+          nh,
+          overlay.textColor,
+          nameSettings.blockSize === 'small'
+            ? 0.72
+            : nameSettings.blockSize === 'medium'
+              ? 0.86
+              : 1
+        );
+      }
     }
-    ctx.drawImage(
-      img,
-      srcX, srcY, srcWidth, srcHeight,
-      -heightPx / 2, -widthPx / 2, heightPx, widthPx
-    );
-  } else if (fillMode === 'fitHeight') {
-    // Scale so that image height (→ vertical) fills heightPx; letterbox left/right
-    const scale = heightPx / img.width;
-    const drawHeight = img.height * scale;
-    ctx.drawImage(
-      img,
-      0, 0, img.width, img.height,
-      -heightPx / 2, -drawHeight / 2, heightPx, drawHeight
-    );
-  } else {
-    // fitWidth: scale so that image width (→ horizontal) fills widthPx; letterbox top/bottom
-    const scale = widthPx / img.height;
-    const drawWidth = img.width * scale;
-    ctx.drawImage(
-      img,
-      0, 0, img.width, img.height,
-      -drawWidth / 2, -widthPx / 2, drawWidth, widthPx
-    );
   }
 
-  return canvas.toDataURL('image/jpeg', 0.92);
-};
-
-/**
- * Draws a decorative card border onto the PDF
- */
-const drawCardBorder = (
-  pdf: jsPDF,
-  x: number,
-  y: number,
-  width: number,
-  height: number
-) => {
-  const borderWidth = BORDER_WIDTH_MM;
-  const cornerRadius = 2;
-
-  // Outer border - dark gold
-  pdf.setDrawColor(100, 80, 45);
-  pdf.setLineWidth(borderWidth);
-  pdf.roundedRect(
-    x + borderWidth / 2,
-    y + borderWidth / 2,
-    width - borderWidth,
-    height - borderWidth,
-    cornerRadius,
-    cornerRadius
+  const outputCanvas = document.createElement('canvas');
+  outputCanvas.width = widthPx;
+  outputCanvas.height = heightPx;
+  const outputCtx = outputCanvas.getContext('2d')!;
+  outputCtx.translate(widthPx / 2, heightPx / 2);
+  outputCtx.rotate(flipForGmSide ? Math.PI / 2 : -Math.PI / 2);
+  outputCtx.drawImage(
+    portraitCanvas,
+    -portraitWidth / 2,
+    -portraitHeight / 2,
+    portraitWidth,
+    portraitHeight
   );
 
-  // Inner accent line - lighter gold
-  pdf.setDrawColor(180, 150, 90);
-  pdf.setLineWidth(0.25);
-  pdf.roundedRect(
-    x + borderWidth + 0.6,
-    y + borderWidth + 0.6,
-    width - (borderWidth + 0.6) * 2,
-    height - (borderWidth + 0.6) * 2,
-    cornerRadius - 0.3,
-    cornerRadius - 0.3
-  );
+  return outputCanvas.toDataURL('image/jpeg', 0.94);
 };
 
 /**
@@ -158,31 +132,15 @@ const drawFoldLine = (
   pdf.setLineWidth(FOLD_LINE_WIDTH_MM);
   pdf.setLineDashPattern([FOLD_LINE_DASH_MM, FOLD_LINE_DASH_MM], 0);
   // Vertical line in the center
-  pdf.line(x, y + BORDER_WIDTH_MM + 0.5, x, y + height - BORDER_WIDTH_MM - 0.5);
+  pdf.line(x, y + 0.5, x, y + height - 0.5);
   // Reset dash pattern
   pdf.setLineDashPattern([], 0);
 };
 
 /**
- * Get CSS font string based on font option (for canvas context)
- */
-const getCanvasFont = (font: FontOption, sizePx: number): string => {
-  switch (font) {
-    case 'medieval':
-      return `bold ${sizePx}px "Times New Roman", serif`;
-    case 'elegant':
-      return `italic ${sizePx}px Georgia, serif`;
-    case 'fantasy':
-      return `${sizePx}px Papyrus, Copperplate, fantasy`;
-    default:
-      return `bold ${sizePx}px "Times New Roman", serif`;
-  }
-};
-
-/**
  * Get block height in mm based on size option
  */
-const getBlockHeightMm = (size: BlockSizeOption): number => {
+const getBlockHeightMm = (size: NameSettings['blockSize']): number => {
   switch (size) {
     case 'small':
       return 7;
@@ -191,244 +149,23 @@ const getBlockHeightMm = (size: BlockSizeOption): number => {
     case 'large':
       return 14;
     default:
-      return 10;
+      return 14;
   }
-};
-
-/**
- * Background configuration for gradient rendering
- * Gradients go from bottom (opaque) to top (transparent) like in CSS preview
- */
-interface BackgroundConfig {
-  gradientStops: { offset: number; color: string }[];
-  textColor: string;
-  borderColor?: string;
-  isPreset?: boolean; // If true, draw full border around block
-}
-
-/**
- * Get background configuration with gradient stops
- * Matches CSS: linear-gradient(to top, solid 0%, faded 60%, transparent 100%)
- */
-const getBackgroundConfig = (bg: NameBackgroundType): BackgroundConfig => {
-  switch (bg) {
-    case 'gradient-dark':
-      return {
-        gradientStops: [
-          { offset: 0, color: 'rgba(0, 0, 0, 0.9)' },
-          { offset: 0.6, color: 'rgba(0, 0, 0, 0.6)' },
-          { offset: 1, color: 'rgba(0, 0, 0, 0)' },
-        ],
-        textColor: '#ffffff',
-      };
-    case 'gradient-gold':
-      return {
-        gradientStops: [
-          { offset: 0, color: 'rgba(139, 109, 56, 0.95)' },
-          { offset: 0.6, color: 'rgba(139, 109, 56, 0.6)' },
-          { offset: 1, color: 'rgba(139, 109, 56, 0)' },
-        ],
-        textColor: '#ffffff',
-      };
-    case 'gradient-red':
-      return {
-        gradientStops: [
-          { offset: 0, color: 'rgba(120, 40, 40, 0.95)' },
-          { offset: 0.6, color: 'rgba(120, 40, 40, 0.6)' },
-          { offset: 1, color: 'rgba(120, 40, 40, 0)' },
-        ],
-        textColor: '#ffffff',
-      };
-    case 'scroll':
-      return {
-        gradientStops: [
-          { offset: 0, color: 'rgba(45, 40, 35, 0.95)' },
-          { offset: 1, color: 'rgba(45, 40, 35, 0.95)' },
-        ],
-        textColor: '#f5f0e6',
-        borderColor: 'rgba(160, 135, 85, 0.8)',
-        isPreset: true,
-      };
-    case 'banner':
-      return {
-        gradientStops: [
-          { offset: 0, color: 'rgba(70, 25, 25, 0.95)' },
-          { offset: 1, color: 'rgba(70, 25, 25, 0.95)' },
-        ],
-        textColor: '#f5f0e6',
-        borderColor: 'rgba(180, 130, 100, 0.8)',
-        isPreset: true,
-      };
-    case 'shield':
-      return {
-        gradientStops: [
-          { offset: 0, color: 'rgba(25, 40, 60, 0.95)' },
-          { offset: 1, color: 'rgba(25, 40, 60, 0.95)' },
-        ],
-        textColor: '#f5f0e6',
-        borderColor: 'rgba(120, 150, 180, 0.8)',
-        isPreset: true,
-      };
-    default:
-      return {
-        gradientStops: [
-          { offset: 0, color: 'rgba(0, 0, 0, 0.9)' },
-          { offset: 0.6, color: 'rgba(0, 0, 0, 0.6)' },
-          { offset: 1, color: 'rgba(0, 0, 0, 0)' },
-        ],
-        textColor: '#ffffff',
-      };
-  }
-};
-
-/**
- * Wrap text to fit within a given width
- */
-const wrapText = (
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number
-): string[] => {
-  const words = text.split(' ');
-  const lines: string[] = [];
-  let currentLine = '';
-
-  for (const word of words) {
-    const testLine = currentLine ? `${currentLine} ${word}` : word;
-    const metrics = ctx.measureText(testLine);
-    
-    if (metrics.width > maxWidth && currentLine) {
-      lines.push(currentLine);
-      currentLine = word;
-    } else {
-      currentLine = testLine;
-    }
-  }
-  
-  if (currentLine) {
-    lines.push(currentLine);
-  }
-  
-  return lines;
-};
-
-/**
- * Renders character name label to a canvas data URL
- * Uses canvas to support Cyrillic and other Unicode characters
- * Supports multi-line text wrapping and gradient backgrounds
- */
-const renderNameLabelToDataUrl = (
-  nameSettings: NameSettings,
-  widthPx: number,
-  heightPx: number,
-  rotationDeg: number = 0
-): string => {
-  const canvas = document.createElement('canvas');
-  
-  // If rotated, swap dimensions for the canvas
-  if (Math.abs(rotationDeg) === 90) {
-    canvas.width = heightPx;
-    canvas.height = widthPx;
-  } else {
-    canvas.width = widthPx;
-    canvas.height = heightPx;
-  }
-  
-  const ctx = canvas.getContext('2d')!;
-  
-  // Apply rotation
-  if (rotationDeg !== 0) {
-    ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.rotate((rotationDeg * Math.PI) / 180);
-    ctx.translate(-widthPx / 2, -heightPx / 2);
-  }
-  
-  const config = getBackgroundConfig(nameSettings.background);
-  
-  // Draw gradient background - vertical from bottom (opaque) to top (transparent)
-  // In canvas: y=heightPx is bottom, y=0 is top
-  const gradient = ctx.createLinearGradient(0, heightPx, 0, 0);
-  for (const stop of config.gradientStops) {
-    gradient.addColorStop(stop.offset, stop.color);
-  }
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, widthPx, heightPx);
-  
-  // Draw border
-  if (config.borderColor) {
-    ctx.strokeStyle = config.borderColor;
-    ctx.lineWidth = 3;
-    
-    if (config.isPreset) {
-      // Full border for presets
-      const borderInset = 1.5;
-      ctx.strokeRect(borderInset, borderInset, widthPx - borderInset * 2, heightPx - borderInset * 2);
-    } else {
-      // Top border only for gradients
-      ctx.beginPath();
-      ctx.moveTo(0, 1.5);
-      ctx.lineTo(widthPx, 1.5);
-      ctx.stroke();
-    }
-  }
-  
-  // Calculate font size based on block height, start large and scale down if needed
-  const padding = 16;
-  const maxWidth = widthPx - padding * 2;
-  const maxHeight = heightPx - padding;
-  const lineHeightMultiplier = 1.15;
-  
-  // Start with a font size proportional to height
-  let fontSize = Math.floor(heightPx * 0.45);
-  const minFontSize = 14;
-  
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-  ctx.shadowBlur = 3;
-  ctx.shadowOffsetX = 1;
-  ctx.shadowOffsetY = 1;
-  ctx.fillStyle = config.textColor;
-  
-  let lines: string[] = [];
-  let totalTextHeight = 0;
-  
-  // Scale down font size until text fits
-  while (fontSize >= minFontSize) {
-    ctx.font = getCanvasFont(nameSettings.font, fontSize);
-    lines = wrapText(ctx, nameSettings.name, maxWidth);
-    const lineHeight = fontSize * lineHeightMultiplier;
-    totalTextHeight = lines.length * lineHeight;
-    
-    if (totalTextHeight <= maxHeight) {
-      break;
-    }
-    fontSize -= 2;
-  }
-  
-  // Draw the text lines
-  const lineHeight = fontSize * lineHeightMultiplier;
-  const startY = (heightPx - totalTextHeight) / 2 + lineHeight / 2;
-  
-  for (let i = 0; i < lines.length; i++) {
-    ctx.fillText(lines[i], widthPx / 2, startY + i * lineHeight);
-  }
-  
-  return canvas.toDataURL('image/png');
 };
 
 /**
  * Draws character name on a card half using canvas rendering
  * The name is rotated to match the card orientation
  */
-const drawCharacterName = (
+const drawCharacterName = async (
   pdf: jsPDF,
   nameSettings: NameSettings,
   x: number,
   y: number,
   halfWidth: number,
   cardHeight: number,
-  isGmSide: boolean
+  isGmSide: boolean,
+  inset: number
 ) => {
   if (!nameSettings.enabled || !nameSettings.name.trim()) return;
   
@@ -439,9 +176,6 @@ const drawCharacterName = (
   
   if (!shouldShow) return;
 
-  const inset = BORDER_WIDTH_MM + 0.5;
-  
-  // Block height based on size setting
   const nameHeight = getBlockHeightMm(nameSettings.blockSize);
   
   // For rotated cards, the name label width becomes the card height
@@ -456,8 +190,7 @@ const drawCharacterName = (
   // Rotation: GM side (left) is rotated +90°, player side (right) is rotated -90°
   const rotation = isGmSide ? 90 : -90;
   
-  // Render the name label
-  const labelDataUrl = renderNameLabelToDataUrl(nameSettings, labelWidthPx, labelHeightPx, rotation);
+  const labelDataUrl = await renderNameLabelToDataUrl(nameSettings, labelWidthPx, labelHeightPx, rotation);
   
   // Position the label
   // For GM side (left half): label goes on the left edge (after rotation, it's at x position)
@@ -529,16 +262,18 @@ const drawCutLines = (
  * Each card has the image twice - rotated on left, normal on right
  * Cards use the area inside 0.5 cm margins on all sides; white cut lines run within that area
  * @param cards - Array of character cards to include
- * @param cardsPerPage - Number of cards per page (4, 5, or 10)
+ * @param cardsPerPage - Number of cards per page (4 or 20)
  * @returns Object URL and filename for opening the PDF in a new tab
  */
 export const generatePDF = async (
   cards: CharacterCard[],
-  cardsPerPage: CardsPerPageOption = 5
+  cardsPerPage: CardsPerPageOption = 4
 ): Promise<{ url: string; filename: string }> => {
   if (cards.length === 0) {
     throw new Error('No cards to generate');
   }
+
+  await ensureNameFontsLoaded();
 
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -585,49 +320,44 @@ export const generatePDF = async (
 
     // Render both halves of the card
     const fillMode = cards[i].imageFillMode ?? 'cover';
+    const presetNameSettings =
+      cards[i].nameSettings?.enabled && isPresetBackground(cards[i].nameSettings.background)
+        ? cards[i].nameSettings
+        : undefined;
     const [normalDataUrl, rotatedDataUrl] = await Promise.all([
-      renderCardHalfToDataUrl(cards[i].imageUrl, halfWidthPx, halfHeightPx, false, fillMode),
-      renderCardHalfToDataUrl(cards[i].imageUrl, halfWidthPx, halfHeightPx, true, fillMode),
+      renderCardHalfToDataUrl(cards[i].imageUrl, halfWidthPx, halfHeightPx, false, fillMode, presetNameSettings),
+      renderCardHalfToDataUrl(cards[i].imageUrl, halfWidthPx, halfHeightPx, true, fillMode, presetNameSettings),
     ]);
 
-    // Inset for border (scaled for smaller cards)
-    const inset = cardsPerPage === 20 ? BORDER_WIDTH_MM * 0.6 + 0.3 : BORDER_WIDTH_MM + 0.5;
-    // Gap between the two halves (for fold line)
-    const halfGap = cardsPerPage === 20 ? 0.4 : 0.8;
+    const card = cards[i];
 
-    // Add left half (rotated - GM side when folded)
     pdf.addImage(
       rotatedDataUrl,
       'JPEG',
-      x + inset,
-      y + inset,
-      halfWidth - inset - halfGap,
-      cardHeight - inset * 2
+      x,
+      y,
+      halfWidth,
+      cardHeight
     );
 
-    // Add right half (normal - player side)
     pdf.addImage(
       normalDataUrl,
       'JPEG',
-      x + halfWidth + halfGap,
-      y + inset,
-      halfWidth - inset - halfGap,
-      cardHeight - inset * 2
+      x + halfWidth,
+      y,
+      halfWidth,
+      cardHeight
     );
 
-    // Draw decorative border around entire card
-    drawCardBorder(pdf, x, y, cardWidth, cardHeight);
-
-    // Draw vertical fold line in the middle
     drawFoldLine(pdf, x + halfWidth, y, cardHeight);
 
-    // Draw character name if enabled
-    const card = cards[i];
-    if (card.nameSettings?.enabled && card.nameSettings.name.trim()) {
-      // Draw on GM side (left half)
-      drawCharacterName(pdf, card.nameSettings, x, y, halfWidth, cardHeight, true);
-      // Draw on player side (right half)
-      drawCharacterName(pdf, card.nameSettings, x + halfWidth, y, halfWidth, cardHeight, false);
+    if (
+      card.nameSettings?.enabled &&
+      card.nameSettings.name.trim() &&
+      !isPresetBackground(card.nameSettings.background)
+    ) {
+      await drawCharacterName(pdf, card.nameSettings, x, y, halfWidth, cardHeight, true, 0.25);
+      await drawCharacterName(pdf, card.nameSettings, x + halfWidth, y, halfWidth, cardHeight, false, 0.25);
     }
   }
 
@@ -645,8 +375,7 @@ export const generatePDF = async (
   const timestamp = new Date().toISOString().slice(0, 10);
   const filename = `initiative-cards-${cardsPerPage}pp-${timestamp}.pdf`;
   const blob = pdf.output('blob');
-  const file = new File([blob], filename, { type: 'application/pdf' });
-  const url = URL.createObjectURL(file);
+  const url = URL.createObjectURL(blob);
 
   return { url, filename };
 };
