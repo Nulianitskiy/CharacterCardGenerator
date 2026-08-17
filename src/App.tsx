@@ -3,25 +3,25 @@ import { ImageUpload } from './components/ImageUpload';
 import { CardGrid } from './components/CardGrid';
 import { CardOptionsMenu } from './components/CardOptionsMenu';
 import { generatePDF } from './utils/pdfGenerator';
+import { generateId } from './utils/generateId';
+import { pluralRu } from './utils/pluralRu';
 import type { CharacterCard, NameSettings, ImageFillMode } from './types';
 import type { CardsPerPageOption } from './constants';
+import './styles/cardVisuals.css';
 import './App.css';
-
-function pluralRu(n: number, one: string, few: string, many: string): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod100 >= 11 && mod100 <= 14) return many;
-  if (mod10 === 1) return one;
-  if (mod10 >= 2 && mod10 <= 4) return few;
-  return many;
-}
 
 function App() {
   const [cards, setCards] = useState<CharacterCard[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingProgress, setGeneratingProgress] = useState<{
+    completed: number;
+    total: number;
+  } | null>(null);
   const [cardsPerPage, setCardsPerPage] = useState<CardsPerPageOption>(4);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const pdfUrlRef = useRef<string | null>(null);
+  const cardsRef = useRef(cards);
+  cardsRef.current = cards;
 
   useEffect(() => {
     return () => {
@@ -29,12 +29,47 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (cards.length === 0) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [cards.length]);
+
+  useEffect(() => {
+    if (!selectedCardId) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelectedCardId(null);
+      }
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      if (target.closest('.sidebar') || target.closest('.card')) return;
+      setSelectedCardId(null);
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerdown', onPointerDown);
+    };
+  }, [selectedCardId]);
+
   const handleImagesUploaded = useCallback((newCards: CharacterCard[]) => {
     setCards((prev) => [...prev, ...newCards]);
   }, []);
 
   const handleRemoveCard = useCallback((id: string) => {
-    setCards((prev) => prev.filter((card) => card.id !== id));
+    const card = cardsRef.current.find((item) => item.id === id);
+    if (card) URL.revokeObjectURL(card.imageUrl);
+    setCards((prev) => prev.filter((item) => item.id !== id));
     setSelectedCardId((prevSelected) => (prevSelected === id ? null : prevSelected));
   }, []);
 
@@ -47,21 +82,27 @@ function App() {
   }, []);
 
   const handleDuplicateCard = useCallback((id: string) => {
+    const source = cardsRef.current.find((card) => card.id === id);
+    if (!source) return;
+
+    const imageUrl = URL.createObjectURL(source.file);
+    const duplicatedCard: CharacterCard = {
+      ...source,
+      id: generateId(),
+      imageUrl,
+      nameSettings: { ...source.nameSettings },
+      imageFillMode: source.imageFillMode ?? 'cover',
+    };
+
     setCards((prev) => {
       const index = prev.findIndex((card) => card.id === id);
-      if (index === -1) return prev;
-
-      const cardToDuplicate = prev[index];
-      const duplicatedCard: CharacterCard = {
-        ...cardToDuplicate,
-        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        nameSettings: { ...cardToDuplicate.nameSettings },
-        imageFillMode: cardToDuplicate.imageFillMode ?? 'cover',
-      };
-
-      const newCards = [...prev];
-      newCards.splice(index + 1, 0, duplicatedCard);
-      return newCards;
+      if (index === -1) {
+        URL.revokeObjectURL(imageUrl);
+        return prev;
+      }
+      const next = [...prev];
+      next.splice(index + 1, 0, duplicatedCard);
+      return next;
     });
   }, []);
 
@@ -87,16 +128,6 @@ function App() {
     });
   }, []);
 
-  const handlePlayerSideClick = useCallback((id: string) => {
-    // TODO: Implement player side image selection
-    console.log('Player side clicked for card:', id);
-  }, []);
-
-  const handleGmSideClick = useCallback((id: string) => {
-    // TODO: Implement GM side image selection
-    console.log('GM side clicked for card:', id);
-  }, []);
-
   const handleUpdateNameSettings = useCallback((id: string, settings: NameSettings) => {
     setCards((prev) =>
       prev.map((card) =>
@@ -114,15 +145,19 @@ function App() {
   }, []);
 
   const handleClearAll = useCallback(() => {
-    // Revoke all object URLs to free memory
-    cards.forEach((card) => URL.revokeObjectURL(card.imageUrl));
+    if (
+      !window.confirm('Удалить все карточки? Это действие нельзя отменить.')
+    ) {
+      return;
+    }
+    cardsRef.current.forEach((card) => URL.revokeObjectURL(card.imageUrl));
     setCards([]);
-  }, [cards]);
+    setSelectedCardId(null);
+  }, []);
 
   const handleGeneratePDF = useCallback(async () => {
     if (cards.length === 0) return;
 
-    // Open the tab immediately so the browser does not block the popup after await
     const previewTab = window.open('', '_blank');
     if (previewTab) {
       previewTab.document.write(`<!DOCTYPE html>
@@ -150,15 +185,31 @@ function App() {
     }
 
     setIsGenerating(true);
+    setGeneratingProgress({ completed: 0, total: cards.length });
     try {
-      const { url } = await generatePDF(cards, cardsPerPage);
+      const { url, filename } = await generatePDF(
+        cards,
+        cardsPerPage,
+        (completed, total) => {
+          setGeneratingProgress({ completed, total });
+        }
+      );
       if (pdfUrlRef.current) URL.revokeObjectURL(pdfUrlRef.current);
       pdfUrlRef.current = url;
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.rel = 'noopener';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
       if (previewTab && !previewTab.closed) {
         previewTab.location.replace(url);
         previewTab.focus();
       } else if (!window.open(url, '_blank')) {
-        alert('Разрешите всплывающие окна, чтобы открыть PDF');
+        alert('Разрешите всплывающие окна, чтобы открыть PDF. Файл также скачан.');
       }
     } catch (error) {
       console.error('Failed to generate PDF:', error);
@@ -168,6 +219,7 @@ function App() {
       alert('Не удалось создать PDF. Попробуйте ещё раз.');
     } finally {
       setIsGenerating(false);
+      setGeneratingProgress(null);
     }
   }, [cards, cardsPerPage]);
 
@@ -196,14 +248,18 @@ function App() {
               <span className="layout-label">Карточек на странице:</span>
               <div className="toggle-buttons">
                 <button
+                  type="button"
                   className={`toggle-btn ${cardsPerPage === 4 ? 'active' : ''}`}
+                  aria-pressed={cardsPerPage === 4}
                   onClick={() => setCardsPerPage(4)}
                 >
                   4 карточки
                   <span className="toggle-hint">крупнее</span>
                 </button>
                 <button
+                  type="button"
                   className={`toggle-btn ${cardsPerPage === 20 ? 'active' : ''}`}
+                  aria-pressed={cardsPerPage === 20}
                   onClick={() => setCardsPerPage(20)}
                 >
                   20 карточек
@@ -226,6 +282,7 @@ function App() {
               {cards.length > 0 && (
                 <div className="preview-actions">
                   <button
+                    type="button"
                     className="btn btn-secondary"
                     onClick={handleClearAll}
                     disabled={isGenerating}
@@ -233,6 +290,7 @@ function App() {
                     Очистить все
                   </button>
                   <button
+                    type="button"
                     className="btn btn-primary"
                     onClick={handleGeneratePDF}
                     disabled={isGenerating}
@@ -240,7 +298,9 @@ function App() {
                     {isGenerating ? (
                       <>
                         <span className="spinner" />
-                        Создание...
+                        {generatingProgress
+                          ? `Создание ${generatingProgress.completed}/${generatingProgress.total}`
+                          : 'Создание...'}
                       </>
                     ) : (
                       <>
@@ -250,6 +310,7 @@ function App() {
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="2"
+                          aria-hidden="true"
                         >
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                           <polyline points="14,2 14,8 20,8" />
@@ -265,6 +326,7 @@ function App() {
             </div>
             <CardGrid
               cards={cards}
+              cardsPerPage={cardsPerPage}
               onRemoveCard={handleRemoveCard}
               onSelectCard={handleSelectCard}
               selectedCardId={selectedCardId}
@@ -283,13 +345,12 @@ function App() {
         <aside className="sidebar">
           <CardOptionsMenu
             card={selectedCard}
+            cardsPerPage={cardsPerPage}
             onClose={handleCloseOptions}
             onRemove={handleRemoveCard}
             onDuplicate={handleDuplicateCard}
             onMoveUp={handleMoveCardUp}
             onMoveDown={handleMoveCardDown}
-            onPlayerSideClick={handlePlayerSideClick}
-            onGmSideClick={handleGmSideClick}
             onUpdateNameSettings={handleUpdateNameSettings}
             onUpdateImageFillMode={handleUpdateImageFillMode}
             canMoveUp={selectedIndex > 0}

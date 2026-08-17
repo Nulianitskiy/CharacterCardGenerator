@@ -1,0 +1,116 @@
+.filled-image-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.filled-image-wrap-letterbox {
+  background: #ffffff;
+}
+
+.card-image-wrap {
+  position: absolute;
+  inset: 0;
+}
+
+.card-image,
+.side-image {
+  display: block;
+  max-width: none;
+}
+
+.preset-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.preset-overlay-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+}
+
+.preset-name {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  line-height: 1.05;
+  overflow: hidden;
+  padding: 0 2%;
+  text-shadow: 0 0.15cqh 0 rgba(255, 255, 255, 0.55);
+}
+
+.preset-name.preset-size-small {
+  font-size: 6cqh;
+}
+
+.preset-name.preset-size-medium {
+  font-size: 8cqh;
+}
+
+.preset-name.preset-size-large {
+  font-size: 10cqh;
+}
+
+.name-font-medieval .name-text,
+.font-medieval,
+.name-font-medieval.preset-name {
+  font-family: 'Old Standard TT', 'Times New Roman', serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.name-font-elegant .name-text,
+.font-elegant,
+.name-font-elegant.preset-name {
+  font-family: Georgia, serif;
+  font-style: italic;
+}
+
+.name-font-fantasy .name-text,
+.font-fantasy,
+.name-font-fantasy.preset-name {
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.name-font-royal .name-text,
+.font-royal,
+.name-font-royal.preset-name {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.name-font-script .name-text,
+.font-script,
+.name-font-script.preset-name {
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+.name-font-ancient .name-text,
+.font-ancient,
+.name-font-ancient.preset-name {
+  font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+}
+
+.name-font-inscription .name-text,
+.font-inscription,
+.name-font-inscription.preset-name {
+  font-family: Palatino, 'Palatino Linotype', 'Book Antiqua', serif;
+}
+
+.name-font-bold .name-text,
+.font-option.font-bold,
+.name-font-bold.preset-name,
+.font-bold {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+}

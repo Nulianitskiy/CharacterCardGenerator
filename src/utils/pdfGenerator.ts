@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import type { CharacterCard, NameSettings, ImageFillMode } from '../types';
+import type { CharacterCard, ImageFillMode, NameSettings } from '../types';
 import {
   CUT_LINE_WIDTH_MM,
   FOLD_LINE_WIDTH_MM,
@@ -12,13 +12,11 @@ import {
   getHalfHeight,
   type CardsPerPageOption,
 } from '../constants';
-import { ensureNameFontsLoaded, renderNameLabelToDataUrl, drawFittedName } from './nameLabelRender';
-import { getPresetOverlay, isPresetBackground } from './presetOverlays';
+import { ensureNameFontsLoaded, drawFittedName } from './nameLabelRender';
+import { getPresetOverlay } from './presetOverlays';
 import { layoutImageFill } from './imageFillLayout';
+import { get2dContext } from './canvas2d';
 
-/**
- * Loads an image from a URL and returns it as an HTMLImageElement
- */
 const loadImage = (url: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -38,6 +36,8 @@ const loadOverlayImage = async (src: string): Promise<HTMLImageElement> => {
   return img;
 };
 
+type RasterFormat = 'PNG' | 'JPEG';
+
 const renderCardHalfToDataUrl = async (
   imageUrl: string,
   widthPx: number,
@@ -45,14 +45,14 @@ const renderCardHalfToDataUrl = async (
   flipForGmSide: boolean = false,
   fillMode: ImageFillMode = 'cover',
   nameSettings?: NameSettings
-): Promise<string> => {
+): Promise<{ dataUrl: string; format: RasterFormat }> => {
   const img = await loadImage(imageUrl);
   const portraitWidth = heightPx;
   const portraitHeight = widthPx;
   const portraitCanvas = document.createElement('canvas');
   portraitCanvas.width = portraitWidth;
   portraitCanvas.height = portraitHeight;
-  const portraitCtx = portraitCanvas.getContext('2d')!;
+  const portraitCtx = get2dContext(portraitCanvas);
 
   if (fillMode !== 'cover') {
     portraitCtx.fillStyle = '#ffffff';
@@ -105,7 +105,7 @@ const renderCardHalfToDataUrl = async (
   const outputCanvas = document.createElement('canvas');
   outputCanvas.width = widthPx;
   outputCanvas.height = heightPx;
-  const outputCtx = outputCanvas.getContext('2d')!;
+  const outputCtx = get2dContext(outputCanvas);
   outputCtx.translate(widthPx / 2, heightPx / 2);
   outputCtx.rotate(flipForGmSide ? Math.PI / 2 : -Math.PI / 2);
   outputCtx.drawImage(
@@ -116,12 +116,13 @@ const renderCardHalfToDataUrl = async (
     portraitHeight
   );
 
-  return outputCanvas.toDataURL('image/jpeg', 0.94);
+  const usePng = Boolean(shouldShowName && nameSettings);
+  if (usePng) {
+    return { dataUrl: outputCanvas.toDataURL('image/png'), format: 'PNG' };
+  }
+  return { dataUrl: outputCanvas.toDataURL('image/jpeg', 0.94), format: 'JPEG' };
 };
 
-/**
- * Draws a dashed vertical fold line in the middle of the horizontal card
- */
 const drawFoldLine = (
   pdf: jsPDF,
   x: number,
@@ -131,105 +132,19 @@ const drawFoldLine = (
   pdf.setDrawColor(120, 100, 60);
   pdf.setLineWidth(FOLD_LINE_WIDTH_MM);
   pdf.setLineDashPattern([FOLD_LINE_DASH_MM, FOLD_LINE_DASH_MM], 0);
-  // Vertical line in the center
   pdf.line(x, y + 0.5, x, y + height - 0.5);
-  // Reset dash pattern
   pdf.setLineDashPattern([], 0);
 };
 
-/**
- * Get block height in mm based on size option
- */
-const getBlockHeightMm = (size: NameSettings['blockSize']): number => {
-  switch (size) {
-    case 'small':
-      return 7;
-    case 'medium':
-      return 10;
-    case 'large':
-      return 14;
-    default:
-      return 14;
-  }
-};
-
-/**
- * Draws character name on a card half using canvas rendering
- * The name is rotated to match the card orientation
- */
-const drawCharacterName = async (
-  pdf: jsPDF,
-  nameSettings: NameSettings,
-  x: number,
-  y: number,
-  halfWidth: number,
-  cardHeight: number,
-  isGmSide: boolean,
-  inset: number
-) => {
-  if (!nameSettings.enabled || !nameSettings.name.trim()) return;
-  
-  const shouldShow = 
-    nameSettings.displaySide === 'both' ||
-    (nameSettings.displaySide === 'player' && !isGmSide) ||
-    (nameSettings.displaySide === 'gm' && isGmSide);
-  
-  if (!shouldShow) return;
-
-  const nameHeight = getBlockHeightMm(nameSettings.blockSize);
-  
-  // For rotated cards, the name label width becomes the card height
-  // and the height becomes a strip along the edge
-  const pxPerMm = 10;
-  const labelWidthMm = cardHeight - inset * 2;
-  const labelHeightMm = nameHeight;
-  
-  const labelWidthPx = labelWidthMm * pxPerMm;
-  const labelHeightPx = labelHeightMm * pxPerMm;
-  
-  // Rotation: GM side (left) is rotated +90°, player side (right) is rotated -90°
-  const rotation = isGmSide ? 90 : -90;
-  
-  const labelDataUrl = await renderNameLabelToDataUrl(nameSettings, labelWidthPx, labelHeightPx, rotation);
-  
-  // Position the label
-  // For GM side (left half): label goes on the left edge (after rotation, it's at x position)
-  // For player side (right half): label goes on the right edge
-  let labelX: number;
-  const labelY = y + inset;
-  
-  if (isGmSide) {
-    // Left edge of left half
-    labelX = x + inset;
-  } else {
-    // Right edge of right half
-    labelX = x + halfWidth - inset - nameHeight;
-  }
-  
-  // Add the rotated label image
-  // After rotation, dimensions are swapped
-  pdf.addImage(
-    labelDataUrl,
-    'PNG',
-    labelX,
-    labelY,
-    nameHeight, // width after rotation
-    labelWidthMm // height after rotation
-  );
-};
-
-/**
- * Draws white cut lines between cards for easy cutting
- */
 const drawCutLines = (
   pdf: jsPDF,
   cardsOnPage: number,
   cardHeight: number,
   cardsPerPage: CardsPerPageOption
 ) => {
-  pdf.setDrawColor(255, 255, 255); // White
+  pdf.setDrawColor(255, 255, 255);
   pdf.setLineWidth(CUT_LINE_WIDTH_MM);
-  pdf.setLineDashPattern([], 0); // Solid line
+  pdf.setLineDashPattern([], 0);
 
   const mx = PAGE_MARGIN_X_MM;
   const my = PAGE_MARGIN_Y_MM;
@@ -257,17 +172,10 @@ const drawCutLines = (
   }
 };
 
-/**
- * Generates a PDF document with all foldable character cards laid out horizontally
- * Each card has the image twice - rotated on left, normal on right
- * Cards use the area inside 0.5 cm margins on all sides; white cut lines run within that area
- * @param cards - Array of character cards to include
- * @param cardsPerPage - Number of cards per page (4 or 20)
- * @returns Object URL and filename for opening the PDF in a new tab
- */
 export const generatePDF = async (
   cards: CharacterCard[],
-  cardsPerPage: CardsPerPageOption = 4
+  cardsPerPage: CardsPerPageOption = 4,
+  onProgress?: (completed: number, total: number) => void
 ): Promise<{ url: string; filename: string }> => {
   if (cards.length === 0) {
     throw new Error('No cards to generate');
@@ -281,33 +189,28 @@ export const generatePDF = async (
     format: 'a4',
   });
 
-  // Get dimensions based on cards per page
   const cardHeight = getCardHeight(cardsPerPage);
   const cardWidth = getCardWidth(cardsPerPage);
   const halfWidth = getHalfWidth(cardsPerPage);
   const halfHeight = getHalfHeight(cardsPerPage);
 
-  // High-resolution rendering (300 DPI equivalent)
   const pxPerMm = 10;
   const halfWidthPx = halfWidth * pxPerMm;
   const halfHeightPx = halfHeight * pxPerMm;
 
-  // For 20-card layout: 2 columns × 10 rows
   const columnsPerPage = cardsPerPage === 20 ? 2 : 1;
 
   for (let i = 0; i < cards.length; i++) {
     const pageIndex = Math.floor(i / cardsPerPage);
     const positionOnPage = i % cardsPerPage;
 
-    // Add new page if needed (skip for first page)
     if (positionOnPage === 0 && pageIndex > 0) {
       pdf.addPage();
     }
 
-    // Calculate card position
     let x: number;
     let y: number;
-    
+
     if (cardsPerPage === 20) {
       const col = positionOnPage % columnsPerPage;
       const row = Math.floor(positionOnPage / columnsPerPage);
@@ -318,50 +221,22 @@ export const generatePDF = async (
       y = PAGE_MARGIN_Y_MM + positionOnPage * cardHeight;
     }
 
-    // Render both halves of the card
     const fillMode = cards[i].imageFillMode ?? 'cover';
-    const presetNameSettings =
-      cards[i].nameSettings?.enabled && isPresetBackground(cards[i].nameSettings.background)
-        ? cards[i].nameSettings
-        : undefined;
-    const [normalDataUrl, rotatedDataUrl] = await Promise.all([
-      renderCardHalfToDataUrl(cards[i].imageUrl, halfWidthPx, halfHeightPx, false, fillMode, presetNameSettings),
-      renderCardHalfToDataUrl(cards[i].imageUrl, halfWidthPx, halfHeightPx, true, fillMode, presetNameSettings),
+    const nameSettings = cards[i].nameSettings?.enabled
+      ? cards[i].nameSettings
+      : undefined;
+    const [playerHalf, gmHalf] = await Promise.all([
+      renderCardHalfToDataUrl(cards[i].imageUrl, halfWidthPx, halfHeightPx, false, fillMode, nameSettings),
+      renderCardHalfToDataUrl(cards[i].imageUrl, halfWidthPx, halfHeightPx, true, fillMode, nameSettings),
     ]);
 
-    const card = cards[i];
-
-    pdf.addImage(
-      rotatedDataUrl,
-      'JPEG',
-      x,
-      y,
-      halfWidth,
-      cardHeight
-    );
-
-    pdf.addImage(
-      normalDataUrl,
-      'JPEG',
-      x + halfWidth,
-      y,
-      halfWidth,
-      cardHeight
-    );
+    pdf.addImage(gmHalf.dataUrl, gmHalf.format, x, y, halfWidth, cardHeight);
+    pdf.addImage(playerHalf.dataUrl, playerHalf.format, x + halfWidth, y, halfWidth, cardHeight);
 
     drawFoldLine(pdf, x + halfWidth, y, cardHeight);
-
-    if (
-      card.nameSettings?.enabled &&
-      card.nameSettings.name.trim() &&
-      !isPresetBackground(card.nameSettings.background)
-    ) {
-      await drawCharacterName(pdf, card.nameSettings, x, y, halfWidth, cardHeight, true, 0.25);
-      await drawCharacterName(pdf, card.nameSettings, x + halfWidth, y, halfWidth, cardHeight, false, 0.25);
-    }
+    onProgress?.(i + 1, cards.length);
   }
 
-  // Draw cut lines on each page
   const totalPages = Math.ceil(cards.length / cardsPerPage);
   for (let page = 0; page < totalPages; page++) {
     pdf.setPage(page + 1);

@@ -17,16 +17,9 @@ export type FontOption =
 export type BlockSizeOption = 'small' | 'medium' | 'large';
 
 /**
- * Background style options for the name label
+ * Decorative frame / name plate presets
  */
 export type NameBackgroundType =
-  | 'gradient-dark'
-  | 'gradient-gold'
-  | 'gradient-red'
-  | 'gradient-emerald'
-  | 'gradient-arcane'
-  | 'gradient-ice'
-  | 'gradient-fire'
   | 'sketch'
   | 'gothic'
   | 'celestial'

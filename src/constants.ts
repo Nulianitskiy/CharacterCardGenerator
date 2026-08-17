@@ -46,13 +46,10 @@ export const CARD_HEIGHT_20_MM = CONTENT_HEIGHT_MM / 10;
 // Card width (full page width for 4 cards, half for 20 cards)
 export const getCardWidth = (cardsPerPage: CardsPerPageOption): number => {
   if (cardsPerPage === 20) {
-    return CARD_WIDTH_MM / 2; // Half width for 20-card layout (2 columns)
+    return CARD_WIDTH_MM / 2;
   }
   return CARD_WIDTH_MM;
 };
-
-// Half card width (each image section - left and right halves)
-export const HALF_WIDTH_MM = CARD_WIDTH_MM / 2;
 
 /**
  * Get half width based on cards per page (for each image section within a card)
@@ -67,14 +64,6 @@ export const getHalfWidth = (cardsPerPage: CardsPerPageOption): number => {
 export const getHalfHeight = (cardsPerPage: CardsPerPageOption): number => {
   return getCardHeight(cardsPerPage);
 };
-
-export const CARD_ASPECT_RATIO_4 = CARD_WIDTH_MM / CARD_HEIGHT_4_MM;
-
-// Preview card dimensions in pixels (for screen display)
-export const PREVIEW_CARD_WIDTH_PX = 340;
-export const PREVIEW_CARD_HEIGHT_4_PX = Math.round(
-  PREVIEW_CARD_WIDTH_PX / CARD_ASPECT_RATIO_4
-);
 
 // Fold line settings
 export const FOLD_LINE_WIDTH_MM = 0.3;

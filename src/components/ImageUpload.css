@@ -1,0 +1,87 @@
+.upload-zone {
+  border: 3px dashed var(--gold-muted);
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: linear-gradient(
+    145deg,
+    rgba(45, 38, 28, 0.6) 0%,
+    rgba(35, 30, 22, 0.8) 100%
+  );
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-zone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    rgba(205, 173, 109, 0.1) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.upload-zone:hover,
+.upload-zone:focus-visible,
+.upload-zone-active {
+  border-color: var(--gold);
+  background: linear-gradient(
+    145deg,
+    rgba(55, 48, 35, 0.7) 0%,
+    rgba(45, 38, 28, 0.9) 100%
+  );
+}
+
+.upload-zone:hover::before,
+.upload-zone:focus-visible::before,
+.upload-zone-active::before {
+  opacity: 1;
+}
+
+.upload-input {
+  display: none;
+}
+
+.upload-content {
+  position: relative;
+  z-index: 1;
+}
+
+.upload-icon {
+  width: 64px;
+  height: 64px;
+  color: var(--gold);
+  margin-bottom: 1rem;
+  opacity: 0.8;
+}
+
+.upload-text {
+  font-family: var(--font-body);
+  font-size: 1.25rem;
+  color: var(--cream);
+  margin: 0 0 0.5rem;
+}
+
+.upload-hint {
+  font-size: 0.875rem;
+  color: var(--gold-muted);
+  margin: 0;
+}
+
+.upload-error {
+  margin: 0.75rem 0 0;
+  color: #f87171;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .upload-zone {
+    padding: 2rem 1rem;
+  }
+}

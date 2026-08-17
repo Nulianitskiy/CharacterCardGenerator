@@ -1,0 +1,58 @@
+.page-previews {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+  padding: 0.5rem 0 1rem;
+}
+
+.a4-page {
+  width: min(100%, 520px);
+}
+
+.a4-page-label {
+  margin: 0 0 0.5rem;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--gold-muted);
+}
+
+.a4-sheet {
+  width: 100%;
+  aspect-ratio: 210 / 297;
+  box-sizing: border-box;
+  padding: 2.38%;
+  display: grid;
+  background: #d8d2c6;
+  border: 1px solid rgba(205, 173, 109, 0.4);
+}
+
+.a4-sheet-4 {
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+}
+
+.a4-sheet-20 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(10, minmax(0, 1fr));
+  gap: 1px;
+}
+
+.card-slot-empty {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.grid-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--cream);
+  opacity: 0.6;
+}
+
+.grid-empty p {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  margin: 0;
+}

@@ -4,12 +4,12 @@ A web application for creating printable foldable initiative cards for tabletop 
 
 ## Features
 
-- **Drag & Drop Upload** - Easy image upload with drag-and-drop or file browser
-- **Multiple Layouts** - Choose between 4 or 5 cards per A4 page
-- **Foldable Design** - Cards are designed to fold vertically and hang on GM screens
-- **Decorative Borders** - Gold-accented borders with fold lines
-- **PDF Generation** - One-click PDF export for printing
-- **Responsive UI** - Works on desktop and mobile devices
+- **Drag & Drop Upload** - Image upload with drag-and-drop or file browser (JPG, PNG, WEBP)
+- **Multiple Layouts** - 4 large cards or 20 mini cards per A4 page
+- **Print preview** - On-screen A4 sheets with fold lines matching the PDF
+- **Name plates** - Decorative frames and labels on the player side, GM side, or both
+- **Foldable Design** - Cards fold vertically and hang on GM screens
+- **PDF Export** - Named PDF download plus a preview tab
 
 ## Demo
 
@@ -46,15 +46,24 @@ npm run build
 npm run preview
 ```
 
+### Tests
+
+```bash
+npm test
+```
+
 ## Usage
 
 1. Open the application in your browser
 2. Upload character images (JPG, PNG, or WEBP)
-3. Select the number of cards per page (4 for larger cards, 5 for compact)
-4. Click "Generate PDF" to download the printable PDF
-5. Print the PDF and cut along the white lines between cards
-6. Fold each card vertically along the dashed line
-7. Hang the folded cards on your GM screen
+3. Select the number of cards per page (4 for larger cards, 20 for compact)
+4. Click a card to set a name, frame, fill mode, and order
+5. Click "Создать PDF" to download a printable PDF and open a preview
+6. Print the PDF and cut along the white lines between cards
+7. Fold each card vertically along the dashed line
+8. Hang the folded cards on your GM screen
+
+The interface is in Russian.
 
 ## Tech Stack
 
@@ -62,6 +71,7 @@ npm run preview
 - TypeScript
 - Vite
 - jsPDF for PDF generation
+- Vitest
 
 ## License
 

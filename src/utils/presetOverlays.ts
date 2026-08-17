@@ -188,27 +188,6 @@ export const PRESET_OVERLAYS: Record<PresetOverlayId, PresetOverlayMeta> = {
   },
 };
 
-export const PRESET_BACKGROUNDS: NameBackgroundType[] = [
-  'sketch',
-  'gothic',
-  'celestial',
-  'forest',
-  'arcane',
-  'infernal',
-  'frost',
-  'dwarven',
-  'steampunk',
-  'nautical',
-  'lower-tavern',
-  'lower-alchemist',
-  'lower-parchment',
-  'lower-silver',
-  'lower-arcane',
-  'lower-royal',
-  'lower-wild',
-  'lower-infernal',
-];
-
 export const isPresetBackground = (bg: NameBackgroundType): bg is PresetOverlayId =>
   bg in PRESET_OVERLAYS;
 

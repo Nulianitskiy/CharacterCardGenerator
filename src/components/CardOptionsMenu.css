@@ -1,0 +1,333 @@
+.card-options-menu {
+  background: transparent;
+}
+
+.options-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(205, 173, 109, 0.3);
+}
+
+.options-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--gold);
+  margin: 0;
+}
+
+.options-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cream);
+  border: 1px solid rgba(205, 173, 109, 0.3);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.options-close:hover {
+  background: rgba(205, 173, 109, 0.2);
+  border-color: var(--gold);
+}
+
+.options-preview {
+  margin-bottom: 1rem;
+}
+
+.preview-sides {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.preview-side {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(30, 25, 20, 0.6);
+  border: 2px solid rgba(205, 173, 109, 0.3);
+  border-radius: 10px;
+}
+
+.side-label {
+  font-family: var(--font-body);
+  font-size: clamp(0.6rem, 2vw, 0.75rem);
+  font-weight: 600;
+  color: var(--gold);
+  text-transform: uppercase;
+  white-space: nowrap;
+  min-height: 1em;
+  letter-spacing: 0.05em;
+}
+
+.side-image-container {
+  position: relative;
+  width: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid rgba(205, 173, 109, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  container-type: size;
+}
+
+.options-section {
+  background: rgba(30, 25, 20, 0.6);
+  border: 1px solid rgba(205, 173, 109, 0.2);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.section-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.toggle-label {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+.name-settings {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(205, 173, 109, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.setting-label {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--cream);
+  opacity: 0.8;
+}
+
+.setting-input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(205, 173, 109, 0.3);
+  background: rgba(20, 17, 12, 0.8);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.setting-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(205, 173, 109, 0.2);
+}
+
+.setting-input::placeholder {
+  color: rgba(245, 240, 230, 0.4);
+}
+
+.font-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.4rem;
+}
+
+.font-option {
+  padding: 0.45rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid rgba(205, 173, 109, 0.3);
+  background: rgba(20, 17, 12, 0.6);
+  color: var(--cream);
+  font-size: 0.72rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.font-option:hover {
+  border-color: var(--gold);
+  background: rgba(205, 173, 109, 0.1);
+}
+
+.font-option.active {
+  border-color: var(--gold);
+  background: rgba(205, 173, 109, 0.2);
+  color: var(--gold);
+}
+
+.background-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bg-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.bg-group-label {
+  font-size: 0.7rem;
+  color: var(--gold-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bg-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.bg-option {
+  width: 40px;
+  height: 28px;
+  border-radius: 4px;
+  border: 2px solid rgba(205, 173, 109, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bg-option:hover {
+  border-color: var(--gold);
+  transform: scale(1.05);
+}
+
+.bg-option.active {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(205, 173, 109, 0.3);
+}
+
+.bg-option-preset {
+  width: 34px;
+  height: 48px;
+  background-color: #18130d;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.display-side-options,
+.fill-mode-options,
+.block-size-options {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.side-option,
+.fill-mode-option,
+.size-option {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(205, 173, 109, 0.3);
+  background: rgba(20, 17, 12, 0.6);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.size-option {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.side-option:hover,
+.fill-mode-option:hover,
+.size-option:hover {
+  border-color: var(--gold);
+  background: rgba(205, 173, 109, 0.1);
+}
+
+.side-option.active,
+.fill-mode-option.active,
+.size-option.active {
+  border-color: var(--gold);
+  background: rgba(205, 173, 109, 0.2);
+  color: var(--gold);
+}
+
+.options-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.option-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: var(--cream);
+  border: 1px solid rgba(205, 173, 109, 0.2);
+  text-align: left;
+}
+
+.option-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.option-btn:hover:not(:disabled) {
+  background: rgba(205, 173, 109, 0.15);
+  border-color: var(--gold);
+}
+
+.option-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.option-btn-danger {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+.option-btn-danger:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.15);
+  border-color: #f87171;
+}
