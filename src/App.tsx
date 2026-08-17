@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { ImageUpload } from './components/ImageUpload';
 import { CardGrid } from './components/CardGrid';
 import { CardOptionsMenu } from './components/CardOptionsMenu';
@@ -21,6 +21,13 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [cardsPerPage, setCardsPerPage] = useState<CardsPerPageOption>(5);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const pdfUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pdfUrlRef.current) URL.revokeObjectURL(pdfUrlRef.current);
+    };
+  }, []);
 
   const handleImagesUploaded = useCallback((newCards: CharacterCard[]) => {
     setCards((prev) => [...prev, ...newCards]);
@@ -115,11 +122,49 @@ function App() {
   const handleGeneratePDF = useCallback(async () => {
     if (cards.length === 0) return;
 
+    // Open the tab immediately so the browser does not block the popup after await
+    const previewTab = window.open('', '_blank');
+    if (previewTab) {
+      previewTab.document.write(`<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Создание PDF…</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #1a1612;
+        color: #cdad6d;
+        font-family: Georgia, serif;
+        font-size: 18px;
+      }
+    </style>
+  </head>
+  <body>Создание PDF…</body>
+</html>`);
+      previewTab.document.close();
+    }
+
     setIsGenerating(true);
     try {
-      await generatePDF(cards, cardsPerPage);
+      const { url } = await generatePDF(cards, cardsPerPage);
+      if (pdfUrlRef.current) URL.revokeObjectURL(pdfUrlRef.current);
+      pdfUrlRef.current = url;
+      if (previewTab && !previewTab.closed) {
+        previewTab.location.replace(url);
+        previewTab.focus();
+      } else if (!window.open(url, '_blank')) {
+        alert('Разрешите всплывающие окна, чтобы открыть PDF');
+      }
     } catch (error) {
       console.error('Failed to generate PDF:', error);
+      if (previewTab && !previewTab.closed) {
+        previewTab.close();
+      }
       alert('Не удалось создать PDF. Попробуйте ещё раз.');
     } finally {
       setIsGenerating(false);

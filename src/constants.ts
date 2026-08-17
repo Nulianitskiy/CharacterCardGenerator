@@ -13,11 +13,11 @@ export type CardsPerPageOption = 4 | 5 | 20;
 // Cut line width (white lines between cards for cutting guide)
 export const CUT_LINE_WIDTH_MM = 0.5;
 
-/** Top and bottom margins on PDF (1 cm each) */
-export const PAGE_MARGIN_Y_MM = 10;
+/** Top and bottom margins on PDF (0.5 cm each) */
+export const PAGE_MARGIN_Y_MM = 5;
 
-/** Side margins on PDF (1 cm each) */
-export const PAGE_MARGIN_X_MM = 10;
+/** Side margins on PDF (0.5 cm each) */
+export const PAGE_MARGIN_X_MM = 5;
 
 /** Usable width for cards between left and right margins */
 export const CONTENT_WIDTH_MM = A4_WIDTH_MM - 2 * PAGE_MARGIN_X_MM;

@@ -527,15 +527,18 @@ const drawCutLines = (
 /**
  * Generates a PDF document with all foldable character cards laid out horizontally
  * Each card has the image twice - rotated on left, normal on right
- * Cards use the area inside 1 cm margins on all sides; white cut lines run within that area
+ * Cards use the area inside 0.5 cm margins on all sides; white cut lines run within that area
  * @param cards - Array of character cards to include
  * @param cardsPerPage - Number of cards per page (4, 5, or 10)
+ * @returns Object URL and filename for opening the PDF in a new tab
  */
 export const generatePDF = async (
   cards: CharacterCard[],
   cardsPerPage: CardsPerPageOption = 5
-): Promise<void> => {
-  if (cards.length === 0) return;
+): Promise<{ url: string; filename: string }> => {
+  if (cards.length === 0) {
+    throw new Error('No cards to generate');
+  }
 
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -639,7 +642,11 @@ export const generatePDF = async (
     drawCutLines(pdf, cardsOnThisPage, cardHeight, cardsPerPage);
   }
 
-  // Save the PDF with a timestamp
   const timestamp = new Date().toISOString().slice(0, 10);
-  pdf.save(`initiative-cards-${cardsPerPage}pp-${timestamp}.pdf`);
+  const filename = `initiative-cards-${cardsPerPage}pp-${timestamp}.pdf`;
+  const blob = pdf.output('blob');
+  const file = new File([blob], filename, { type: 'application/pdf' });
+  const url = URL.createObjectURL(file);
+
+  return { url, filename };
 };
