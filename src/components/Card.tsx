@@ -29,7 +29,7 @@ export function Card({ card, onRemove, onSelect, isSelected }: CardProps) {
     >
       <FilledCharacterImage
         src={card.imageUrl}
-        alt="Character"
+        alt="Персонаж"
         imageFillMode={card.imageFillMode}
         className="card-image"
         wrapperClassName="card-image-wrap"
@@ -37,7 +37,7 @@ export function Card({ card, onRemove, onSelect, isSelected }: CardProps) {
       <button
         className="card-remove"
         onClick={handleRemove}
-        aria-label="Remove card"
+        aria-label="Удалить карточку"
       >
         ×
       </button>

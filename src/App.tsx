@@ -7,6 +7,15 @@ import type { CharacterCard, NameSettings, ImageFillMode } from './types';
 import type { CardsPerPageOption } from './constants';
 import './App.css';
 
+function pluralRu(n: number, one: string, few: string, many: string): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 14) return many;
+  if (mod10 === 1) return one;
+  if (mod10 >= 2 && mod10 <= 4) return few;
+  return many;
+}
+
 function App() {
   const [cards, setCards] = useState<CharacterCard[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -111,7 +120,7 @@ function App() {
       await generatePDF(cards, cardsPerPage);
     } catch (error) {
       console.error('Failed to generate PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      alert('Не удалось создать PDF. Попробуйте ещё раз.');
     } finally {
       setIsGenerating(false);
     }
@@ -126,9 +135,9 @@ function App() {
     <div className={`app ${selectedCardId ? 'with-sidebar' : ''}`}>
       <div className="app-content">
         <header className="header">
-          <h1 className="title">Initiative Card Generator</h1>
+          <h1 className="title">Генератор карточек инициативы</h1>
           <p className="subtitle">
-            Create foldable initiative cards that hang on your GM screen
+            Создавайте складывающиеся карточки инициативы для ширмы мастера
           </p>
         </header>
 
@@ -139,28 +148,28 @@ function App() {
 
           <section className="layout-section">
             <div className="layout-toggle">
-              <span className="layout-label">Cards per page:</span>
+              <span className="layout-label">Карточек на странице:</span>
               <div className="toggle-buttons">
                 <button
                   className={`toggle-btn ${cardsPerPage === 4 ? 'active' : ''}`}
                   onClick={() => setCardsPerPage(4)}
                 >
-                  4 cards
-                  <span className="toggle-hint">larger</span>
+                  4 карточки
+                  <span className="toggle-hint">крупнее</span>
                 </button>
                 <button
                   className={`toggle-btn ${cardsPerPage === 5 ? 'active' : ''}`}
                   onClick={() => setCardsPerPage(5)}
                 >
-                  5 cards
-                  <span className="toggle-hint">compact</span>
+                  5 карточек
+                  <span className="toggle-hint">компактно</span>
                 </button>
                 <button
                   className={`toggle-btn ${cardsPerPage === 20 ? 'active' : ''}`}
                   onClick={() => setCardsPerPage(20)}
                 >
-                  20 cards
-                  <span className="toggle-hint">mini</span>
+                  20 карточек
+                  <span className="toggle-hint">мини</span>
                 </button>
               </div>
             </div>
@@ -169,11 +178,10 @@ function App() {
           <section className="preview-section">
             <div className="preview-header">
               <h2 className="preview-title">
-                Cards
+                Карточки
                 {cards.length > 0 && (
                   <span className="card-count">
-                    {cards.length} image{cards.length !== 1 ? 's' : ''} • {pageCount} page
-                    {pageCount !== 1 ? 's' : ''}
+                    {cards.length} {pluralRu(cards.length, 'изображение', 'изображения', 'изображений')} • {pageCount} {pluralRu(pageCount, 'страница', 'страницы', 'страниц')}
                   </span>
                 )}
               </h2>
@@ -184,7 +192,7 @@ function App() {
                     onClick={handleClearAll}
                     disabled={isGenerating}
                   >
-                    Clear All
+                    Очистить все
                   </button>
                   <button
                     className="btn btn-primary"
@@ -194,7 +202,7 @@ function App() {
                     {isGenerating ? (
                       <>
                         <span className="spinner" />
-                        Generating...
+                        Создание...
                       </>
                     ) : (
                       <>
@@ -210,7 +218,7 @@ function App() {
                           <line x1="12" y1="18" x2="12" y2="12" />
                           <line x1="9" y1="15" x2="15" y2="15" />
                         </svg>
-                        Generate PDF
+                        Создать PDF
                       </>
                     )}
                   </button>
@@ -228,8 +236,7 @@ function App() {
 
         <footer className="footer">
           <p>
-            Horizontal foldable cards • {cardsPerPage} cards per A4 page • Fold
-            vertically to hang on GM screen
+            Горизонтальные складывающиеся карточки • {cardsPerPage} {pluralRu(cardsPerPage, 'карточка', 'карточки', 'карточек')} на лист A4 • сложите по вертикали и повесьте на ширму мастера
           </p>
         </footer>
       </div>

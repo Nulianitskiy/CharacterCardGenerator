@@ -20,7 +20,7 @@ export function CardGrid({
   if (cards.length === 0) {
     return (
       <div className="grid-empty">
-        <p>No cards yet. Upload some character images to get started!</p>
+        <p>Пока нет карточек. Загрузите изображения персонажей, чтобы начать!</p>
       </div>
     );
   }

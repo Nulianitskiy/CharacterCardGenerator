@@ -2,9 +2,9 @@ import type { CharacterCard, NameSettings, FontOption, BlockSizeOption, NameBack
 import { FilledCharacterImage } from './FilledCharacterImage';
 
 const FONT_OPTIONS: { value: FontOption; label: string }[] = [
-  { value: 'medieval', label: 'Medieval' },
-  { value: 'elegant', label: 'Elegant' },
-  { value: 'fantasy', label: 'Fantasy' },
+  { value: 'medieval', label: 'Средневековый' },
+  { value: 'elegant', label: 'Элегантный' },
+  { value: 'fantasy', label: 'Фэнтези' },
 ];
 
 const BLOCK_SIZE_OPTIONS: { value: BlockSizeOption; label: string }[] = [
@@ -14,24 +14,24 @@ const BLOCK_SIZE_OPTIONS: { value: BlockSizeOption; label: string }[] = [
 ];
 
 const BACKGROUND_OPTIONS: { value: NameBackgroundType; label: string; type: 'gradient' | 'preset' }[] = [
-  { value: 'gradient-dark', label: 'Dark', type: 'gradient' },
-  { value: 'gradient-gold', label: 'Gold', type: 'gradient' },
-  { value: 'gradient-red', label: 'Red', type: 'gradient' },
-  { value: 'scroll', label: 'Scroll', type: 'preset' },
-  { value: 'banner', label: 'Banner', type: 'preset' },
-  { value: 'shield', label: 'Shield', type: 'preset' },
+  { value: 'gradient-dark', label: 'Тёмный', type: 'gradient' },
+  { value: 'gradient-gold', label: 'Золотой', type: 'gradient' },
+  { value: 'gradient-red', label: 'Красный', type: 'gradient' },
+  { value: 'scroll', label: 'Свиток', type: 'preset' },
+  { value: 'banner', label: 'Знамя', type: 'preset' },
+  { value: 'shield', label: 'Щит', type: 'preset' },
 ];
 
 const DISPLAY_SIDE_OPTIONS: { value: NameDisplaySide; label: string }[] = [
-  { value: 'player', label: 'Player' },
-  { value: 'gm', label: 'GM' },
-  { value: 'both', label: 'Both' },
+  { value: 'player', label: 'Игрок' },
+  { value: 'gm', label: 'Мастер' },
+  { value: 'both', label: 'Обе' },
 ];
 
 const IMAGE_FILL_OPTIONS: { value: ImageFillMode; label: string }[] = [
-  { value: 'cover', label: 'Fill (crop)' },
-  { value: 'fitWidth', label: 'Fit width' },
-  { value: 'fitHeight', label: 'Fit height' },
+  { value: 'cover', label: 'Заполнить (обрезка)' },
+  { value: 'fitWidth', label: 'По ширине' },
+  { value: 'fitHeight', label: 'По высоте' },
 ];
 
 interface CardOptionsMenuProps {
@@ -91,11 +91,11 @@ export function CardOptionsMenu({
   return (
     <div className="card-options-menu">
       <div className="options-header">
-        <h3 className="options-title">Card Options</h3>
+        <h3 className="options-title">Параметры карточки</h3>
         <button
           className="options-close"
           onClick={onClose}
-          aria-label="Close menu"
+          aria-label="Закрыть меню"
         >
           ×
         </button>
@@ -106,13 +106,13 @@ export function CardOptionsMenu({
           <button
             className="preview-side"
             onClick={() => onPlayerSideClick(card.id)}
-            aria-label="Edit player side"
+            aria-label="Редактировать сторону игрока"
           >
-            <span className="side-label">Player Side</span>
+            <span className="side-label">Сторона игрока</span>
             <div className="side-image-container">
               <FilledCharacterImage
                 src={card.imageUrl}
-                alt="Player side"
+                alt="Сторона игрока"
                 imageFillMode={imageFillMode}
                 className="side-image"
               />
@@ -127,13 +127,13 @@ export function CardOptionsMenu({
           <button
             className="preview-side"
             onClick={() => onGmSideClick(card.id)}
-            aria-label="Edit GM side"
+            aria-label="Редактировать сторону мастера"
           >
-            <span className="side-label">GM Side</span>
+            <span className="side-label">Сторона мастера</span>
             <div className="side-image-container">
               <FilledCharacterImage
                 src={card.imageUrl}
-                alt="GM side"
+                alt="Сторона мастера"
                 imageFillMode={imageFillMode}
                 className="side-image"
               />
@@ -150,7 +150,7 @@ export function CardOptionsMenu({
       {/* Image fill mode */}
       <div className="options-section">
         <div className="setting-row">
-          <label className="setting-label">Image fill</label>
+          <label className="setting-label">Заполнение</label>
           <div className="fill-mode-options">
             {IMAGE_FILL_OPTIONS.map((option) => (
               <button
@@ -174,24 +174,24 @@ export function CardOptionsMenu({
             checked={nameSettings.enabled}
             onChange={(e) => updateNameSetting('enabled', e.target.checked)}
           />
-          <span className="toggle-label">Character Name</span>
+          <span className="toggle-label">Имя персонажа</span>
         </label>
 
         {nameSettings.enabled && (
           <div className="name-settings">
             <div className="setting-row">
-              <label className="setting-label">Name</label>
+              <label className="setting-label">Имя</label>
               <input
                 type="text"
                 className={`setting-input font-${nameSettings.font}`}
                 value={nameSettings.name}
                 onChange={(e) => updateNameSetting('name', e.target.value)}
-                placeholder="Enter character name..."
+                placeholder="Введите имя персонажа..."
               />
             </div>
 
             <div className="setting-row">
-              <label className="setting-label">Font</label>
+              <label className="setting-label">Шрифт</label>
               <div className="font-options">
                 {FONT_OPTIONS.map((font) => (
                   <button
@@ -206,7 +206,7 @@ export function CardOptionsMenu({
             </div>
 
             <div className="setting-row">
-              <label className="setting-label">Block Size</label>
+              <label className="setting-label">Размер блока</label>
               <div className="block-size-options">
                 {BLOCK_SIZE_OPTIONS.map((size) => (
                   <button
@@ -221,10 +221,10 @@ export function CardOptionsMenu({
             </div>
 
             <div className="setting-row">
-              <label className="setting-label">Background</label>
+              <label className="setting-label">Фон</label>
               <div className="background-options">
                 <div className="bg-group">
-                  <span className="bg-group-label">Gradients</span>
+                  <span className="bg-group-label">Градиенты</span>
                   <div className="bg-buttons">
                     {BACKGROUND_OPTIONS.filter(bg => bg.type === 'gradient').map((bg) => (
                       <button
@@ -237,7 +237,7 @@ export function CardOptionsMenu({
                   </div>
                 </div>
                 <div className="bg-group">
-                  <span className="bg-group-label">Presets</span>
+                  <span className="bg-group-label">Пресеты</span>
                   <div className="bg-buttons">
                     {BACKGROUND_OPTIONS.filter(bg => bg.type === 'preset').map((bg) => (
                       <button
@@ -253,7 +253,7 @@ export function CardOptionsMenu({
             </div>
 
             <div className="setting-row">
-              <label className="setting-label">Display On</label>
+              <label className="setting-label">Показывать на</label>
               <div className="display-side-options">
                 {DISPLAY_SIDE_OPTIONS.map((option) => (
                   <button
@@ -279,7 +279,7 @@ export function CardOptionsMenu({
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="18,15 12,9 6,15" />
           </svg>
-          Move Up
+          Выше
         </button>
 
         <button
@@ -290,7 +290,7 @@ export function CardOptionsMenu({
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="6,9 12,15 18,9" />
           </svg>
-          Move Down
+          Ниже
         </button>
 
         <button className="option-btn" onClick={handleDuplicate}>
@@ -298,7 +298,7 @@ export function CardOptionsMenu({
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
           </svg>
-          Duplicate
+          Дублировать
         </button>
 
         <button className="option-btn option-btn-danger" onClick={handleRemove}>
@@ -308,7 +308,7 @@ export function CardOptionsMenu({
             <line x1="10" y1="11" x2="10" y2="17" />
             <line x1="14" y1="11" x2="14" y2="17" />
           </svg>
-          Remove
+          Удалить
         </button>
       </div>
     </div>

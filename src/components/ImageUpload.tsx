@@ -98,9 +98,9 @@ export function ImageUpload({ onImagesUploaded }: ImageUploadProps) {
           <line x1="12" y1="3" x2="12" y2="15" />
         </svg>
         <p className="upload-text">
-          Drop character images here or click to browse
+          Перетащите изображения персонажей сюда или нажмите, чтобы выбрать
         </p>
-        <p className="upload-hint">Supports JPG, PNG, WEBP</p>
+        <p className="upload-hint">Поддерживаются JPG, PNG, WEBP</p>
       </div>
     </div>
   );
