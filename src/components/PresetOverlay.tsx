@@ -1,5 +1,6 @@
 import type { NameBackgroundType, NameSettings } from '../types';
 import { getPresetOverlay } from '../utils/presetOverlays';
+import { FittedName } from './FittedName';
 
 interface PresetOverlayProps {
   preset: NameBackgroundType;
@@ -19,7 +20,7 @@ export function PresetOverlay({ preset, name, font, blockSize }: PresetOverlayPr
       <img className="preset-overlay-img" src={meta.src} alt="" draggable={false} />
       {name.trim() !== '' && (
         <div
-          className={`preset-name name-font-${font} preset-size-${blockSize}`}
+          className={`preset-name name-font-${font}`}
           style={{
             left: `${nameBox.x * 100}%`,
             top: `${nameBox.y * 100}%`,
@@ -28,7 +29,7 @@ export function PresetOverlay({ preset, name, font, blockSize }: PresetOverlayPr
             color: meta.textColor,
           }}
         >
-          {name}
+          <FittedName text={name} font={font} blockSize={blockSize} />
         </div>
       )}
     </div>

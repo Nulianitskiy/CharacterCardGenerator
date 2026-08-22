@@ -12,7 +12,7 @@ import {
   getHalfHeight,
   type CardsPerPageOption,
 } from '../constants';
-import { ensureNameFontsLoaded, drawFittedName } from './nameLabelRender';
+import { ensureNameFontsLoaded, drawFittedName, getNameSizeScale } from './nameLabelRender';
 import { getPresetOverlay } from './presetOverlays';
 import { layoutImageFill } from './imageFillLayout';
 import { get2dContext } from './canvas2d';
@@ -141,11 +141,7 @@ const renderCardHalfToDataUrl = async (
           nw,
           nh,
           overlay.textColor,
-          nameSettings.blockSize === 'small'
-            ? 0.72
-            : nameSettings.blockSize === 'medium'
-              ? 0.86
-              : 1
+          getNameSizeScale(nameSettings.blockSize)
         );
       }
     }
