@@ -5,7 +5,9 @@ import { generatePDF } from './utils/pdfGenerator';
 import { generateId } from './utils/generateId';
 import { cloneDndStats } from './utils/dndStats';
 import { pluralRu } from './utils/pluralRu';
-import type { CharacterCard, NameSettings, ImageFillMode, DndStatsSettings } from './types';
+import type { CharacterCard, NameSettings, ImageFillMode, ImageFocus, DndStatsSettings } from './types';
+import { DEFAULT_IMAGE_FOCUS } from './types';
+import { applyReplacedImage, filesFromClipboard, ingestImageFiles, ingestReplacementAndExtras } from './utils/imageIngest';
 import type { CardsPerPageOption } from './constants';
 import './styles/cardVisuals.css';
 import './App.css';
@@ -19,10 +21,14 @@ function App() {
   } | null>(null);
   const [cardsPerPage, setCardsPerPage] = useState<CardsPerPageOption>(4);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [ingestError, setIngestError] = useState<string | null>(null);
   const pdfUrlRef = useRef<string | null>(null);
   const generatingLockRef = useRef(false);
   const cardsRef = useRef(cards);
-  cardsRef.current = cards;
+
+  useEffect(() => {
+    cardsRef.current = cards;
+  }, [cards]);
 
   useEffect(() => {
     return () => {
@@ -65,6 +71,29 @@ function App() {
     };
   }, [selectedCardId]);
 
+  useEffect(() => {
+    const isTypingTarget = (target: EventTarget | null): boolean => {
+      if (!(target instanceof HTMLElement)) return false;
+      return Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
+    };
+
+    const onPaste = (event: ClipboardEvent) => {
+      if (isTypingTarget(event.target) || isTypingTarget(document.activeElement)) return;
+      const files = filesFromClipboard(event);
+      if (files.length === 0) return;
+      event.preventDefault();
+      void ingestImageFiles(files).then(({ cards: newCards, errors }) => {
+        setIngestError(errors.length > 0 ? errors.join('\n') : null);
+        if (newCards.length > 0) {
+          setCards((prev) => [...prev, ...newCards]);
+        }
+      });
+    };
+
+    document.addEventListener('paste', onPaste);
+    return () => document.removeEventListener('paste', onPaste);
+  }, []);
+
   const handleImagesUploaded = useCallback((newCards: CharacterCard[]) => {
     setCards((prev) => [...prev, ...newCards]);
   }, []);
@@ -95,6 +124,7 @@ function App() {
       imageUrl,
       nameSettings: { ...source.nameSettings },
       imageFillMode: source.imageFillMode ?? 'cover',
+      imageFocus: source.imageFocus ? { ...source.imageFocus } : { ...DEFAULT_IMAGE_FOCUS },
       dndStats: cloneDndStats(source.dndStats),
     };
 
@@ -146,6 +176,34 @@ function App() {
         card.id === id ? { ...card, imageFillMode } : card
       )
     );
+  }, []);
+
+  const handleUpdateImageFocus = useCallback((id: string, imageFocus: ImageFocus) => {
+    setCards((prev) =>
+      prev.map((card) => (card.id === id ? { ...card, imageFocus } : card))
+    );
+  }, []);
+
+  const handleReplaceCardFiles = useCallback((id: string, files: File[]) => {
+    void ingestReplacementAndExtras(files).then(({ replacement, extraCards, errors }) => {
+      setIngestError(errors.length > 0 ? errors.join('\n') : null);
+      if (!replacement && extraCards.length === 0) return;
+      setCards((prev) => {
+        const next = replacement
+          ? prev.map((card) => (card.id === id ? applyReplacedImage(card, replacement) : card))
+          : prev;
+        return extraCards.length > 0 ? [...next, ...extraCards] : next;
+      });
+    });
+  }, []);
+
+  const handleReorderCards = useCallback((orderedIds: string[]) => {
+    setCards((prev) => {
+      const byId = new Map(prev.map((card) => [card.id, card]));
+      return orderedIds
+        .map((id) => byId.get(id))
+        .filter((card): card is CharacterCard => Boolean(card));
+    });
   }, []);
 
   const handleUpdateDndStats = useCallback((id: string, dndStats: DndStatsSettings) => {
@@ -333,12 +391,19 @@ function App() {
                 </div>
               </div>
             )}
+            {ingestError && (
+              <p className="ingest-error" role="alert">
+                {ingestError}
+              </p>
+            )}
             <CardGrid
               cards={cards}
               cardsPerPage={cardsPerPage}
               onRemoveCard={handleRemoveCard}
               onSelectCard={handleSelectCard}
               onImagesUploaded={handleImagesUploaded}
+              onReorderCards={handleReorderCards}
+              onReplaceCardFiles={handleReplaceCardFiles}
               selectedCardId={selectedCardId}
             />
           </section>
@@ -364,7 +429,9 @@ function App() {
             onMoveDown={handleMoveCardDown}
             onUpdateNameSettings={handleUpdateNameSettings}
             onUpdateImageFillMode={handleUpdateImageFillMode}
+            onUpdateImageFocus={handleUpdateImageFocus}
             onUpdateDndStats={handleUpdateDndStats}
+            onReplaceImage={handleReplaceCardFiles}
             canMoveUp={selectedIndex > 0}
             canMoveDown={selectedIndex < cards.length - 1}
           />

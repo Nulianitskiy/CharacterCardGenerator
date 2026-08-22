@@ -9,6 +9,16 @@
   background: #ffffff;
 }
 
+.filled-image-wrap-pannable {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.filled-image-wrap-pannable.is-panning {
+  cursor: grabbing;
+}
+
 .card-image-wrap {
   position: absolute;
   inset: 0;

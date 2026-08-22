@@ -82,6 +82,7 @@
   margin: 0.75rem 0 0;
   color: #f87171;
   font-size: 0.9rem;
+  white-space: pre-line;
 }
 
 .card-add {

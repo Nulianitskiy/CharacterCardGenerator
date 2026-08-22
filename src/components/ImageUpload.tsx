@@ -1,9 +1,7 @@
 import { useRef, useCallback, useState, type ChangeEvent, type DragEvent, type KeyboardEvent } from 'react';
-import { ACCEPTED_IMAGE_EXTENSIONS, ACCEPTED_IMAGE_TYPES } from '../constants';
+import { ACCEPTED_IMAGE_EXTENSIONS } from '../constants';
 import type { CharacterCard } from '../types';
-import { defaultNameSettings } from '../types';
-import { generateId } from '../utils/generateId';
-import { createDefaultDndStats } from '../utils/dndStats';
+import { ingestImageFiles } from '../utils/imageIngest';
 import './ImageUpload.css';
 
 interface ImageUploadProps {
@@ -24,42 +22,18 @@ export function ImageUpload({
   const isTile = variant === 'tile';
 
   const processFiles = useCallback(
-    (files: FileList | null) => {
+    async (files: FileList | null) => {
       if (!files || files.length === 0) return;
 
-      const allFiles = Array.from(files);
-      const validFiles = allFiles.filter((file) =>
-        ACCEPTED_IMAGE_TYPES.includes(file.type)
-      );
-      const rejected = allFiles.filter((file) => !ACCEPTED_IMAGE_TYPES.includes(file.type));
-
-      if (rejected.length > 0) {
-        const names = rejected.map((file) => file.name).join(', ');
-        setError(
-          `Не удалось загрузить: ${names}. Поддерживаются JPG, PNG и WEBP.`
-        );
-      } else {
-        setError(null);
-      }
-
-      if (validFiles.length === 0) return;
-
-      const cards: CharacterCard[] = validFiles.map((file) => ({
-        id: generateId(),
-        file,
-        imageUrl: URL.createObjectURL(file),
-        nameSettings: { ...defaultNameSettings },
-        imageFillMode: 'cover',
-        dndStats: createDefaultDndStats(),
-      }));
-
-      onImagesUploaded(cards);
+      const { cards, errors } = await ingestImageFiles(files);
+      setError(errors.length > 0 ? errors.join('\n') : null);
+      if (cards.length > 0) onImagesUploaded(cards);
     },
     [onImagesUploaded]
   );
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    processFiles(e.target.files);
+    void processFiles(e.target.files);
     if (inputRef.current) {
       inputRef.current.value = '';
     }
@@ -70,7 +44,7 @@ export function ImageUpload({
     e.stopPropagation();
     dragDepth.current = 0;
     setIsDragging(false);
-    processFiles(e.dataTransfer.files);
+    void processFiles(e.dataTransfer.files);
   };
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -185,7 +159,7 @@ export function ImageUpload({
           <p className="upload-text">
             Перетащите изображения персонажей сюда или нажмите, чтобы выбрать
           </p>
-          <p className="upload-hint">Поддерживаются JPG, PNG, WEBP</p>
+          <p className="upload-hint">Поддерживаются JPG, PNG, WEBP и HEIC</p>
         </div>
       </div>
       {error && (

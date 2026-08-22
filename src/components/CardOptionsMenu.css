@@ -66,12 +66,30 @@
   transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
 }
 
+.preview-side-pannable {
+  cursor: default;
+}
+
+.side-label-btn {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
 .preview-side:hover,
 .preview-side:focus-visible {
   outline: none;
   border-color: var(--gold);
   background: rgba(40, 34, 25, 0.85);
   transform: translateY(-2px);
+}
+
+.preview-side-pannable:hover,
+.preview-side-pannable:focus-visible {
+  transform: none;
 }
 
 .side-label {
@@ -424,3 +442,8 @@
   background: rgba(248, 113, 113, 0.15);
   border-color: #f87171;
 }
+
+.replace-image-input {
+  display: none;
+}
+

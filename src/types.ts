@@ -84,6 +84,16 @@ export interface DndStatsSettings {
 export type ImageFillMode = 'cover' | 'fitWidth' | 'fitHeight';
 
 /**
+ * Which point of the photo sits at the center of a cover crop (0–1).
+ */
+export interface ImageFocus {
+  x: number;
+  y: number;
+}
+
+export const DEFAULT_IMAGE_FOCUS: ImageFocus = { x: 0.5, y: 0.5 };
+
+/**
  * Settings for the character name display
  */
 export interface NameSettings {
@@ -105,6 +115,8 @@ export interface CharacterCard {
   nameSettings: NameSettings;
   /** How to fit the image inside the card half (default: cover) */
   imageFillMode?: ImageFillMode;
+  /** Cover-crop focus; ignored for fitWidth / fitHeight */
+  imageFocus?: ImageFocus;
   /** Optional D&D stat block replacing one card face */
   dndStats?: DndStatsSettings;
 }

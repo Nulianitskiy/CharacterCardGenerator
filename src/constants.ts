@@ -77,5 +77,14 @@ export const FOLD_LINE_WIDTH_MM = 0.3;
 export const FOLD_LINE_DASH_MM = 3;
 
 // Accepted image formats
-export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-export const ACCEPTED_IMAGE_EXTENSIONS = '.jpg,.jpeg,.png,.webp';
+export const ACCEPTED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+];
+export const ACCEPTED_IMAGE_EXTENSIONS = '.jpg,.jpeg,.png,.webp,.heic,.heif';
+
+/** Ignore click if pointer moved more than this (card reorder / cover pan). */
+export const POINTER_DRAG_THRESHOLD_PX = 6;

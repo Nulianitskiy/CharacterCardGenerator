@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import type { CharacterCard, ImageFillMode, NameSettings, CardSide } from '../types';
+import type { CharacterCard, ImageFillMode, ImageFocus, NameSettings, CardSide } from '../types';
 import {
   CUT_LINE_WIDTH_MM,
   FOLD_LINE_WIDTH_MM,
@@ -18,6 +18,7 @@ import { layoutImageFill } from './imageFillLayout';
 import { get2dContext } from './canvas2d';
 import { drawDndStatsPanel } from './dndStatsRender';
 import { cloneDndStats } from './dndStats';
+import { closePrintImage, loadPrintImage, type PrintImage } from './printImage';
 
 const loadImage = (url: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
@@ -88,14 +89,14 @@ const renderDndStatsHalfToDataUrl = (
 };
 
 const renderCardHalfToDataUrl = async (
-  imageUrl: string,
+  image: PrintImage,
   widthPx: number,
   heightPx: number,
   isSideB: boolean = false,
   fillMode: ImageFillMode = 'cover',
-  nameSettings?: NameSettings
+  nameSettings?: NameSettings,
+  imageFocus?: ImageFocus
 ): Promise<{ dataUrl: string; format: RasterFormat }> => {
-  const img = await loadImage(imageUrl);
   const portraitWidth = heightPx;
   const portraitHeight = widthPx;
   const portraitCanvas = document.createElement('canvas');
@@ -112,10 +113,11 @@ const renderCardHalfToDataUrl = async (
     fillMode,
     portraitWidth,
     portraitHeight,
-    img.width,
-    img.height
+    image.width,
+    image.height,
+    imageFocus
   );
-  portraitCtx.drawImage(img, layout.left, layout.top, layout.width, layout.height);
+  portraitCtx.drawImage(image, layout.left, layout.top, layout.width, layout.height);
 
   const side: CardSide = isSideB ? 'b' : 'a';
   const shouldShowName =
@@ -260,23 +262,27 @@ export const generatePDF = async (
       ? cards[i].nameSettings
       : undefined;
     const stats = cards[i].dndStats;
-    const renderHalf = (isSideB: boolean) => {
-      const side: CardSide = isSideB ? 'b' : 'a';
-      if (stats?.enabled && stats.displaySide === side) {
-        return Promise.resolve(
-          renderDndStatsHalfToDataUrl(halfWidthPx, halfHeightPx, isSideB, cards[i])
+    const printImage = await loadPrintImage(cards[i].imageUrl, halfHeightPx, halfWidthPx);
+
+    try {
+      const renderHalf = (isSideB: boolean) => {
+        const side: CardSide = isSideB ? 'b' : 'a';
+        if (stats?.enabled && stats.displaySide === side) {
+          return Promise.resolve(
+            renderDndStatsHalfToDataUrl(halfWidthPx, halfHeightPx, isSideB, cards[i])
+          );
+        }
+        return renderCardHalfToDataUrl(
+          printImage,
+          halfWidthPx,
+          halfHeightPx,
+          isSideB,
+          fillMode,
+          nameSettings,
+          cards[i].imageFocus
         );
-      }
-      return renderCardHalfToDataUrl(
-        cards[i].imageUrl,
-        halfWidthPx,
-        halfHeightPx,
-        isSideB,
-        fillMode,
-        nameSettings
-      );
-    };
-    const [sideA, sideB] = await Promise.all([renderHalf(false), renderHalf(true)]);
+      };
+      const [sideA, sideB] = await Promise.all([renderHalf(false), renderHalf(true)]);
 
     let sideBX = x - halfGapMm / 2;
     let sideAX = x + halfWidth + halfGapMm / 2;
@@ -299,6 +305,9 @@ export const generatePDF = async (
 
     drawFoldLine(pdf, foldX, y, cardHeight);
     onProgress?.(i + 1, cards.length);
+    } finally {
+      closePrintImage(printImage);
+    }
   }
 
   const totalPages = Math.ceil(cards.length / cardsPerPage);
