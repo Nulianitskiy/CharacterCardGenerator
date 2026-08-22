@@ -45,6 +45,35 @@ export type NameBackgroundType =
 export type NameDisplaySide = 'player' | 'gm' | 'both';
 
 /**
+ * Foldable card face facing the players or the GM
+ */
+export type CardSide = 'player' | 'gm';
+
+/**
+ * D&D 5e ability score keys
+ */
+export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
+
+export type AbilityScores = Record<AbilityKey, number | null>;
+
+/**
+ * Compact D&D stat block shown instead of a portrait on one card face
+ */
+export interface DndStatsSettings {
+  enabled: boolean;
+  displaySide: CardSide;
+  ac: number | null;
+  abilities: AbilityScores;
+  classLevel: string;
+  race: string;
+  spellSaveDc: number | null;
+  speed: string;
+  hpMax: number | null;
+  initiative: number | null;
+  passivePerception: number | null;
+}
+
+/**
  * How the image fills the card area: cover (crop to fill), fit by width, or fit by height
  */
 export type ImageFillMode = 'cover' | 'fitWidth' | 'fitHeight';
@@ -71,6 +100,8 @@ export interface CharacterCard {
   nameSettings: NameSettings;
   /** How to fit the image inside the card half (default: cover) */
   imageFillMode?: ImageFillMode;
+  /** Optional D&D stat block replacing one card face */
+  dndStats?: DndStatsSettings;
 }
 
 /**

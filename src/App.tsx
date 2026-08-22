@@ -4,8 +4,9 @@ import { CardGrid } from './components/CardGrid';
 import { CardOptionsMenu } from './components/CardOptionsMenu';
 import { generatePDF } from './utils/pdfGenerator';
 import { generateId } from './utils/generateId';
+import { cloneDndStats } from './utils/dndStats';
 import { pluralRu } from './utils/pluralRu';
-import type { CharacterCard, NameSettings, ImageFillMode } from './types';
+import type { CharacterCard, NameSettings, ImageFillMode, DndStatsSettings } from './types';
 import type { CardsPerPageOption } from './constants';
 import './styles/cardVisuals.css';
 import './App.css';
@@ -20,6 +21,7 @@ function App() {
   const [cardsPerPage, setCardsPerPage] = useState<CardsPerPageOption>(4);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const pdfUrlRef = useRef<string | null>(null);
+  const generatingLockRef = useRef(false);
   const cardsRef = useRef(cards);
   cardsRef.current = cards;
 
@@ -92,6 +94,7 @@ function App() {
       imageUrl,
       nameSettings: { ...source.nameSettings },
       imageFillMode: source.imageFillMode ?? 'cover',
+      dndStats: cloneDndStats(source.dndStats),
     };
 
     setCards((prev) => {
@@ -144,6 +147,12 @@ function App() {
     );
   }, []);
 
+  const handleUpdateDndStats = useCallback((id: string, dndStats: DndStatsSettings) => {
+    setCards((prev) =>
+      prev.map((card) => (card.id === id ? { ...card, dndStats } : card))
+    );
+  }, []);
+
   const handleClearAll = useCallback(() => {
     if (
       !window.confirm('Удалить все карточки? Это действие нельзя отменить.')
@@ -156,25 +165,30 @@ function App() {
   }, []);
 
   const handleGeneratePDF = useCallback(async () => {
-    if (cards.length === 0) return;
+    if (cards.length === 0 || generatingLockRef.current) return;
+    generatingLockRef.current = true;
 
-    const previewTab = window.open('', '_blank');
+    const previewTab = window.open('about:blank', 'initiative-cards-pdf');
     if (previewTab) {
+      previewTab.document.open();
       previewTab.document.write(`<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
     <title>Создание PDF…</title>
     <style>
-      body {
+      html, body {
         margin: 0;
+        height: 100%;
+        background: #1a1612;
+        color: #cdad6d;
+        font-family: Georgia, serif;
+      }
+      body {
         min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #1a1612;
-        color: #cdad6d;
-        font-family: Georgia, serif;
         font-size: 18px;
       }
     </style>
@@ -197,18 +211,17 @@ function App() {
       if (pdfUrlRef.current) URL.revokeObjectURL(pdfUrlRef.current);
       pdfUrlRef.current = url;
 
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      link.rel = 'noopener';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
       if (previewTab && !previewTab.closed) {
         previewTab.location.replace(url);
         previewTab.focus();
-      } else if (!window.open(url, '_blank')) {
+      } else {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.rel = 'noopener';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
         alert('Разрешите всплывающие окна, чтобы открыть PDF. Файл также скачан.');
       }
     } catch (error) {
@@ -218,6 +231,7 @@ function App() {
       }
       alert('Не удалось создать PDF. Попробуйте ещё раз.');
     } finally {
+      generatingLockRef.current = false;
       setIsGenerating(false);
       setGeneratingProgress(null);
     }
@@ -353,6 +367,7 @@ function App() {
             onMoveDown={handleMoveCardDown}
             onUpdateNameSettings={handleUpdateNameSettings}
             onUpdateImageFillMode={handleUpdateImageFillMode}
+            onUpdateDndStats={handleUpdateDndStats}
             canMoveUp={selectedIndex > 0}
             canMoveDown={selectedIndex < cards.length - 1}
           />

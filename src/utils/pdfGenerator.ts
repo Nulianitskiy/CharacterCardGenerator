@@ -16,6 +16,8 @@ import { ensureNameFontsLoaded, drawFittedName } from './nameLabelRender';
 import { getPresetOverlay } from './presetOverlays';
 import { layoutImageFill } from './imageFillLayout';
 import { get2dContext } from './canvas2d';
+import { drawDndStatsPanel } from './dndStatsRender';
+import { cloneDndStats } from './dndStats';
 
 const loadImage = (url: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
@@ -37,6 +39,53 @@ const loadOverlayImage = async (src: string): Promise<HTMLImageElement> => {
 };
 
 type RasterFormat = 'PNG' | 'JPEG';
+
+const rotatePortraitToHalf = (
+  portraitCanvas: HTMLCanvasElement,
+  widthPx: number,
+  heightPx: number,
+  flipForGmSide: boolean
+): HTMLCanvasElement => {
+  const outputCanvas = document.createElement('canvas');
+  outputCanvas.width = widthPx;
+  outputCanvas.height = heightPx;
+  const outputCtx = get2dContext(outputCanvas);
+  outputCtx.translate(widthPx / 2, heightPx / 2);
+  outputCtx.rotate(flipForGmSide ? Math.PI / 2 : -Math.PI / 2);
+  outputCtx.drawImage(
+    portraitCanvas,
+    -portraitCanvas.width / 2,
+    -portraitCanvas.height / 2,
+    portraitCanvas.width,
+    portraitCanvas.height
+  );
+  return outputCanvas;
+};
+
+const renderDndStatsHalfToDataUrl = (
+  widthPx: number,
+  heightPx: number,
+  flipForGmSide: boolean,
+  card: CharacterCard
+): { dataUrl: string; format: RasterFormat } => {
+  const portraitWidth = heightPx;
+  const portraitHeight = widthPx;
+  const portraitCanvas = document.createElement('canvas');
+  portraitCanvas.width = portraitWidth;
+  portraitCanvas.height = portraitHeight;
+  const portraitCtx = get2dContext(portraitCanvas);
+  const stats = cloneDndStats(card.dndStats);
+  drawDndStatsPanel(
+    portraitCtx,
+    portraitWidth,
+    portraitHeight,
+    stats,
+    card.nameSettings.name,
+    card.nameSettings.font
+  );
+  const outputCanvas = rotatePortraitToHalf(portraitCanvas, widthPx, heightPx, flipForGmSide);
+  return { dataUrl: outputCanvas.toDataURL('image/png'), format: 'PNG' };
+};
 
 const renderCardHalfToDataUrl = async (
   imageUrl: string,
@@ -102,19 +151,7 @@ const renderCardHalfToDataUrl = async (
     }
   }
 
-  const outputCanvas = document.createElement('canvas');
-  outputCanvas.width = widthPx;
-  outputCanvas.height = heightPx;
-  const outputCtx = get2dContext(outputCanvas);
-  outputCtx.translate(widthPx / 2, heightPx / 2);
-  outputCtx.rotate(flipForGmSide ? Math.PI / 2 : -Math.PI / 2);
-  outputCtx.drawImage(
-    portraitCanvas,
-    -portraitWidth / 2,
-    -portraitHeight / 2,
-    portraitWidth,
-    portraitHeight
-  );
+  const outputCanvas = rotatePortraitToHalf(portraitCanvas, widthPx, heightPx, flipForGmSide);
 
   const usePng = Boolean(shouldShowName && nameSettings);
   if (usePng) {
@@ -176,7 +213,7 @@ export const generatePDF = async (
   cards: CharacterCard[],
   cardsPerPage: CardsPerPageOption = 4,
   onProgress?: (completed: number, total: number) => void
-): Promise<{ url: string; filename: string }> => {
+): Promise<{ url: string; filename: string; blob: Blob }> => {
   if (cards.length === 0) {
     throw new Error('No cards to generate');
   }
@@ -225,10 +262,24 @@ export const generatePDF = async (
     const nameSettings = cards[i].nameSettings?.enabled
       ? cards[i].nameSettings
       : undefined;
-    const [playerHalf, gmHalf] = await Promise.all([
-      renderCardHalfToDataUrl(cards[i].imageUrl, halfWidthPx, halfHeightPx, false, fillMode, nameSettings),
-      renderCardHalfToDataUrl(cards[i].imageUrl, halfWidthPx, halfHeightPx, true, fillMode, nameSettings),
-    ]);
+    const stats = cards[i].dndStats;
+    const renderHalf = (flipForGmSide: boolean) => {
+      const side = flipForGmSide ? 'gm' : 'player';
+      if (stats?.enabled && stats.displaySide === side) {
+        return Promise.resolve(
+          renderDndStatsHalfToDataUrl(halfWidthPx, halfHeightPx, flipForGmSide, cards[i])
+        );
+      }
+      return renderCardHalfToDataUrl(
+        cards[i].imageUrl,
+        halfWidthPx,
+        halfHeightPx,
+        flipForGmSide,
+        fillMode,
+        nameSettings
+      );
+    };
+    const [playerHalf, gmHalf] = await Promise.all([renderHalf(false), renderHalf(true)]);
 
     pdf.addImage(gmHalf.dataUrl, gmHalf.format, x, y, halfWidth, cardHeight);
     pdf.addImage(playerHalf.dataUrl, playerHalf.format, x + halfWidth, y, halfWidth, cardHeight);
@@ -249,8 +300,9 @@ export const generatePDF = async (
 
   const timestamp = new Date().toISOString().slice(0, 10);
   const filename = `initiative-cards-${cardsPerPage}pp-${timestamp}.pdf`;
+  pdf.setProperties({ title: filename });
   const blob = pdf.output('blob');
   const url = URL.createObjectURL(blob);
 
-  return { url, filename };
+  return { url, filename, blob };
 };

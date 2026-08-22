@@ -25,7 +25,11 @@ export const getCanvasFont = (font: FontOption, sizePx: number): string => {
 
 export const ensureNameFontsLoaded = async (): Promise<void> => {
   if (typeof document === 'undefined' || !document.fonts) return;
-  await document.fonts.load('700 24px "Old Standard TT"').catch(() => undefined);
+  await Promise.all([
+    document.fonts.load('700 24px "Old Standard TT"').catch(() => undefined),
+    document.fonts.load('700 24px Cinzel').catch(() => undefined),
+    document.fonts.load('600 24px "Crimson Pro"').catch(() => undefined),
+  ]);
   await document.fonts.ready;
 };
 

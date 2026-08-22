@@ -1,4 +1,5 @@
 import type { CharacterCard } from '../types';
+import { DndStatsPanel } from './DndStatsPanel';
 import { FilledCharacterImage } from './FilledCharacterImage';
 import { PresetOverlay } from './PresetOverlay';
 
@@ -13,6 +14,19 @@ export function CardFace({
   side,
   imageClassName = 'card-image',
 }: CardFaceProps) {
+  const stats = card.dndStats;
+  const showStats = Boolean(stats?.enabled && stats.displaySide === side);
+
+  if (showStats && stats) {
+    return (
+      <DndStatsPanel
+        stats={stats}
+        name={card.nameSettings.name}
+        font={card.nameSettings.font}
+      />
+    );
+  }
+
   const showName =
     card.nameSettings.enabled &&
     card.nameSettings.name.trim() !== '' &&

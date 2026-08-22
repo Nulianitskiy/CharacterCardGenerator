@@ -3,6 +3,7 @@ import { ACCEPTED_IMAGE_EXTENSIONS, ACCEPTED_IMAGE_TYPES } from '../constants';
 import type { CharacterCard } from '../types';
 import { defaultNameSettings } from '../types';
 import { generateId } from '../utils/generateId';
+import { createDefaultDndStats } from '../utils/dndStats';
 import './ImageUpload.css';
 
 interface ImageUploadProps {
@@ -42,6 +43,7 @@ export function ImageUpload({ onImagesUploaded }: ImageUploadProps) {
         imageUrl: URL.createObjectURL(file),
         nameSettings: { ...defaultNameSettings },
         imageFillMode: 'cover',
+        dndStats: createDefaultDndStats(),
       }));
 
       onImagesUploaded(cards);
