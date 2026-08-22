@@ -60,6 +60,18 @@
   background: rgba(30, 25, 20, 0.6);
   border: 2px solid rgba(205, 173, 109, 0.3);
   border-radius: 10px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.preview-side:hover,
+.preview-side:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  background: rgba(40, 34, 25, 0.85);
+  transform: translateY(-2px);
 }
 
 .side-label {

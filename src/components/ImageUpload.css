@@ -2,6 +2,7 @@
   border: 3px dashed var(--gold-muted);
   border-radius: 16px;
   padding: 3rem 2rem;
+  min-height: 260px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -12,6 +13,9 @@
   );
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .upload-zone::before {
@@ -80,8 +84,76 @@
   font-size: 0.9rem;
 }
 
+.card-add {
+  position: relative;
+  height: 160px;
+  width: auto;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  color: var(--gold);
+  background: linear-gradient(
+    145deg,
+    rgba(45, 38, 28, 0.55) 0%,
+    rgba(35, 30, 22, 0.8) 100%
+  );
+  border: 2px dashed rgba(205, 173, 109, 0.45);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card-add:hover,
+.card-add:focus-visible,
+.card-add-active {
+  outline: none;
+  transform: translateY(-4px) scale(1.05);
+  border-color: var(--gold);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    0 4px 10px rgba(0, 0, 0, 0.3),
+    0 0 16px rgba(205, 173, 109, 0.25);
+}
+
+.card-add-icon {
+  width: 36px;
+  height: 36px;
+  opacity: 0.9;
+}
+
+.card-add-label {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cream);
+  opacity: 0.8;
+}
+
+.card-add-error {
+  position: absolute;
+  left: 0.4rem;
+  right: 0.4rem;
+  bottom: 0.35rem;
+  font-size: 0.62rem;
+  line-height: 1.2;
+  color: #f87171;
+  text-align: center;
+}
+
 @media (max-width: 640px) {
   .upload-zone {
     padding: 2rem 1rem;
+    min-height: 220px;
   }
 }

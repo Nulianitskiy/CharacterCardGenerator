@@ -7,6 +7,7 @@ import {
   getCardWidth,
   getHalfHeight,
   getHalfWidth,
+  getHangingPortraitAspect,
 } from './constants';
 
 describe('card geometry', () => {
@@ -15,6 +16,7 @@ describe('card geometry', () => {
     expect(getCardWidth(4)).toBe(CARD_WIDTH_MM);
     expect(getHalfWidth(4)).toBe(CARD_WIDTH_MM / 2);
     expect(getHalfHeight(4)).toBe(getCardHeight(4));
+    expect(getHangingPortraitAspect(4)).toBeCloseTo(getCardHeight(4) / getHalfWidth(4));
   });
 
   it('fits a 2×10 grid into the printable area', () => {

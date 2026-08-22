@@ -65,6 +65,13 @@ export const getHalfHeight = (cardsPerPage: CardsPerPageOption): number => {
   return getCardHeight(cardsPerPage);
 };
 
+/**
+ * CSS aspect-ratio of a hanging portrait face (width / height).
+ */
+export const getHangingPortraitAspect = (cardsPerPage: CardsPerPageOption): number => {
+  return getCardHeight(cardsPerPage) / getHalfWidth(cardsPerPage);
+};
+
 // Fold line settings
 export const FOLD_LINE_WIDTH_MM = 0.3;
 export const FOLD_LINE_DASH_MM = 3;

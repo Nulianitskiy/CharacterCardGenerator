@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import type { CharacterCard, ImageFillMode, NameSettings } from '../types';
+import type { CharacterCard, ImageFillMode, NameSettings, CardSide } from '../types';
 import {
   CUT_LINE_WIDTH_MM,
   FOLD_LINE_WIDTH_MM,
@@ -44,14 +44,14 @@ const rotatePortraitToHalf = (
   portraitCanvas: HTMLCanvasElement,
   widthPx: number,
   heightPx: number,
-  flipForGmSide: boolean
+  isSideB: boolean
 ): HTMLCanvasElement => {
   const outputCanvas = document.createElement('canvas');
   outputCanvas.width = widthPx;
   outputCanvas.height = heightPx;
   const outputCtx = get2dContext(outputCanvas);
   outputCtx.translate(widthPx / 2, heightPx / 2);
-  outputCtx.rotate(flipForGmSide ? Math.PI / 2 : -Math.PI / 2);
+  outputCtx.rotate(isSideB ? Math.PI / 2 : -Math.PI / 2);
   outputCtx.drawImage(
     portraitCanvas,
     -portraitCanvas.width / 2,
@@ -65,7 +65,7 @@ const rotatePortraitToHalf = (
 const renderDndStatsHalfToDataUrl = (
   widthPx: number,
   heightPx: number,
-  flipForGmSide: boolean,
+  isSideB: boolean,
   card: CharacterCard
 ): { dataUrl: string; format: RasterFormat } => {
   const portraitWidth = heightPx;
@@ -83,7 +83,7 @@ const renderDndStatsHalfToDataUrl = (
     card.nameSettings.name,
     card.nameSettings.font
   );
-  const outputCanvas = rotatePortraitToHalf(portraitCanvas, widthPx, heightPx, flipForGmSide);
+  const outputCanvas = rotatePortraitToHalf(portraitCanvas, widthPx, heightPx, isSideB);
   return { dataUrl: outputCanvas.toDataURL('image/png'), format: 'PNG' };
 };
 
@@ -91,7 +91,7 @@ const renderCardHalfToDataUrl = async (
   imageUrl: string,
   widthPx: number,
   heightPx: number,
-  flipForGmSide: boolean = false,
+  isSideB: boolean = false,
   fillMode: ImageFillMode = 'cover',
   nameSettings?: NameSettings
 ): Promise<{ dataUrl: string; format: RasterFormat }> => {
@@ -117,7 +117,7 @@ const renderCardHalfToDataUrl = async (
   );
   portraitCtx.drawImage(img, layout.left, layout.top, layout.width, layout.height);
 
-  const side = flipForGmSide ? 'gm' : 'player';
+  const side: CardSide = isSideB ? 'b' : 'a';
   const shouldShowName =
     nameSettings?.enabled &&
     (nameSettings.displaySide === side || nameSettings.displaySide === 'both');
@@ -151,7 +151,7 @@ const renderCardHalfToDataUrl = async (
     }
   }
 
-  const outputCanvas = rotatePortraitToHalf(portraitCanvas, widthPx, heightPx, flipForGmSide);
+  const outputCanvas = rotatePortraitToHalf(portraitCanvas, widthPx, heightPx, isSideB);
 
   const usePng = Boolean(shouldShowName && nameSettings);
   if (usePng) {
@@ -232,6 +232,7 @@ export const generatePDF = async (
   const halfHeight = getHalfHeight(cardsPerPage);
 
   const pxPerMm = 10;
+  const halfGapMm = 1;
   const halfWidthPx = halfWidth * pxPerMm;
   const halfHeightPx = halfHeight * pxPerMm;
 
@@ -263,28 +264,44 @@ export const generatePDF = async (
       ? cards[i].nameSettings
       : undefined;
     const stats = cards[i].dndStats;
-    const renderHalf = (flipForGmSide: boolean) => {
-      const side = flipForGmSide ? 'gm' : 'player';
+    const renderHalf = (isSideB: boolean) => {
+      const side: CardSide = isSideB ? 'b' : 'a';
       if (stats?.enabled && stats.displaySide === side) {
         return Promise.resolve(
-          renderDndStatsHalfToDataUrl(halfWidthPx, halfHeightPx, flipForGmSide, cards[i])
+          renderDndStatsHalfToDataUrl(halfWidthPx, halfHeightPx, isSideB, cards[i])
         );
       }
       return renderCardHalfToDataUrl(
         cards[i].imageUrl,
         halfWidthPx,
         halfHeightPx,
-        flipForGmSide,
+        isSideB,
         fillMode,
         nameSettings
       );
     };
-    const [playerHalf, gmHalf] = await Promise.all([renderHalf(false), renderHalf(true)]);
+    const [sideA, sideB] = await Promise.all([renderHalf(false), renderHalf(true)]);
 
-    pdf.addImage(gmHalf.dataUrl, gmHalf.format, x, y, halfWidth, cardHeight);
-    pdf.addImage(playerHalf.dataUrl, playerHalf.format, x + halfWidth, y, halfWidth, cardHeight);
+    let sideBX = x - halfGapMm / 2;
+    let sideAX = x + halfWidth + halfGapMm / 2;
+    let foldX = x + halfWidth;
+    if (cardsPerPage === 20) {
+      const col = positionOnPage % columnsPerPage;
+      if (col === 0) {
+        sideBX = x - halfGapMm;
+        sideAX = x + halfWidth;
+        foldX = x + halfWidth - halfGapMm / 2;
+      } else {
+        sideBX = x;
+        sideAX = x + halfWidth + halfGapMm;
+        foldX = x + halfWidth + halfGapMm / 2;
+      }
+    }
 
-    drawFoldLine(pdf, x + halfWidth, y, cardHeight);
+    pdf.addImage(sideB.dataUrl, sideB.format, sideBX, y, halfWidth, cardHeight);
+    pdf.addImage(sideA.dataUrl, sideA.format, sideAX, y, halfWidth, cardHeight);
+
+    drawFoldLine(pdf, foldX, y, cardHeight);
     onProgress?.(i + 1, cards.length);
   }
 

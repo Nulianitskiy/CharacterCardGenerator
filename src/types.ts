@@ -40,14 +40,19 @@ export type NameBackgroundType =
   | 'lower-infernal';
 
 /**
- * Which side of the card to display the name on
+ * Foldable card faces: A is the right half on the sheet, B is the left.
  */
-export type NameDisplaySide = 'player' | 'gm' | 'both';
+export type CardSide = 'a' | 'b';
 
 /**
- * Foldable card face facing the players or the GM
+ * Which side of the card to display the name on
  */
-export type CardSide = 'player' | 'gm';
+export type NameDisplaySide = CardSide | 'both';
+
+export const CARD_SIDE_LABELS: Record<CardSide, string> = {
+  a: 'Сторона А',
+  b: 'Сторона Б',
+};
 
 /**
  * D&D 5e ability score keys
@@ -113,5 +118,5 @@ export const defaultNameSettings: NameSettings = {
   font: 'medieval',
   blockSize: 'large',
   background: 'gothic',
-  displaySide: 'player',
+  displaySide: 'a',
 };

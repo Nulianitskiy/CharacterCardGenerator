@@ -49,7 +49,7 @@ export const formatStat = (value: number | null, signed = false): string => {
 
 export const createDefaultDndStats = (): DndStatsSettings => ({
   enabled: false,
-  displaySide: 'gm',
+  displaySide: 'b',
   ac: null,
   abilities: emptyAbilityScores(),
   classLevel: '',

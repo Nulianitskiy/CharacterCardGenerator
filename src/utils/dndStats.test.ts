@@ -53,6 +53,7 @@ describe('createDefaultDndStats', () => {
     expect(stats.hpMax).toBeNull();
     expect(stats.initiative).toBeNull();
     expect(stats.passivePerception).toBeNull();
+    expect(stats.displaySide).toBe('b');
   });
 });
 

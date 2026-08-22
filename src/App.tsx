@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { ImageUpload } from './components/ImageUpload';
 import { CardGrid } from './components/CardGrid';
 import { CardOptionsMenu } from './components/CardOptionsMenu';
 import { generatePDF } from './utils/pdfGenerator';
@@ -52,7 +51,9 @@ function App() {
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      if (target.closest('.sidebar') || target.closest('.card')) return;
+      if (target.closest('.sidebar') || target.closest('.card') || target.closest('.side-preview-modal')) {
+        return;
+      }
       setSelectedCardId(null);
     };
 
@@ -253,10 +254,6 @@ function App() {
         </header>
 
         <main className="main">
-          <section className="upload-section">
-            <ImageUpload onImagesUploaded={handleImagesUploaded} />
-          </section>
-
           <section className="layout-section">
             <div className="layout-toggle">
               <span className="layout-label">Карточек на странице:</span>
@@ -283,17 +280,15 @@ function App() {
             </div>
           </section>
 
-          <section className="preview-section">
-            <div className="preview-header">
-              <h2 className="preview-title">
-                Карточки
-                {cards.length > 0 && (
+          <section className={`preview-section ${cards.length === 0 ? 'is-empty' : ''}`}>
+            {cards.length > 0 && (
+              <div className="preview-header">
+                <h2 className="preview-title">
+                  Карточки
                   <span className="card-count">
                     {cards.length} {pluralRu(cards.length, 'изображение', 'изображения', 'изображений')} • {pageCount} {pluralRu(pageCount, 'страница', 'страницы', 'страниц')}
                   </span>
-                )}
-              </h2>
-              {cards.length > 0 && (
+                </h2>
                 <div className="preview-actions">
                   <button
                     type="button"
@@ -336,13 +331,14 @@ function App() {
                     )}
                   </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
             <CardGrid
               cards={cards}
               cardsPerPage={cardsPerPage}
               onRemoveCard={handleRemoveCard}
               onSelectCard={handleSelectCard}
+              onImagesUploaded={handleImagesUploaded}
               selectedCardId={selectedCardId}
             />
           </section>
@@ -358,6 +354,7 @@ function App() {
       {selectedCard && (
         <aside className="sidebar">
           <CardOptionsMenu
+            key={selectedCard.id}
             card={selectedCard}
             cardsPerPage={cardsPerPage}
             onClose={handleCloseOptions}

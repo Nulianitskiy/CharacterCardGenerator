@@ -7,7 +7,7 @@ A web application for creating printable foldable initiative cards for tabletop 
 - **Drag & Drop Upload** - Image upload with drag-and-drop or file browser (JPG, PNG, WEBP)
 - **Multiple Layouts** - 4 large cards or 20 mini cards per A4 page
 - **Print preview** - On-screen A4 sheets with fold lines matching the PDF
-- **Name plates** - Decorative frames and labels on the player side, GM side, or both
+- **Name plates** - Decorative frames and labels on side A, side B, or both
 - **Foldable Design** - Cards fold vertically and hang on GM screens
 - **PDF Export** - Named PDF download plus a preview tab
 

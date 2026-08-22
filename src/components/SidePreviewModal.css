@@ -1,0 +1,71 @@
+.side-preview-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(10, 8, 6, 0.82);
+  backdrop-filter: blur(4px);
+}
+
+.side-preview-dialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.side-preview-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.side-preview-dialog-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.side-preview-dialog-close {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(205, 173, 109, 0.4);
+  background: rgba(20, 17, 12, 0.85);
+  color: var(--cream);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.side-preview-dialog-close:hover,
+.side-preview-dialog-close:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  background: rgba(205, 173, 109, 0.2);
+}
+
+.side-preview-dialog-face {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(205, 173, 109, 0.35);
+  container-type: size;
+}

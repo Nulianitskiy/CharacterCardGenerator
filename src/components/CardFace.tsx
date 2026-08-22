@@ -1,11 +1,11 @@
-import type { CharacterCard } from '../types';
+import { CARD_SIDE_LABELS, type CardSide, type CharacterCard } from '../types';
 import { DndStatsPanel } from './DndStatsPanel';
 import { FilledCharacterImage } from './FilledCharacterImage';
 import { PresetOverlay } from './PresetOverlay';
 
 interface CardFaceProps {
   card: CharacterCard;
-  side: 'player' | 'gm';
+  side: CardSide;
   imageClassName?: string;
 }
 
@@ -36,7 +36,7 @@ export function CardFace({
     <>
       <FilledCharacterImage
         src={card.imageUrl}
-        alt={side === 'player' ? 'Сторона игрока' : 'Сторона мастера'}
+        alt={CARD_SIDE_LABELS[side]}
         imageFillMode={card.imageFillMode}
         className={imageClassName}
         wrapperClassName="card-image-wrap"

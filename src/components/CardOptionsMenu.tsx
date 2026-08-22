@@ -1,16 +1,17 @@
-import type {
-  CharacterCard,
-  NameSettings,
-  FontOption,
-  BlockSizeOption,
-  NameDisplaySide,
-  ImageFillMode,
-  DndStatsSettings,
-  CardSide,
-  AbilityKey,
+import { useCallback, useState } from 'react';
+import {
+  CARD_SIDE_LABELS,
+  type CharacterCard,
+  type NameSettings,
+  type FontOption,
+  type BlockSizeOption,
+  type NameDisplaySide,
+  type ImageFillMode,
+  type DndStatsSettings,
+  type CardSide,
+  type AbilityKey,
 } from '../types';
-import type { CardsPerPageOption } from '../constants';
-import { getCardHeight, getHalfWidth } from '../constants';
+import { getHangingPortraitAspect, type CardsPerPageOption } from '../constants';
 import { PRESET_OVERLAYS } from '../utils/presetOverlays';
 import {
   ABILITY_KEYS,
@@ -27,6 +28,7 @@ import {
   withUpdatedAbility,
 } from '../utils/dndStats';
 import { CardFace } from './CardFace';
+import { SidePreviewModal } from './SidePreviewModal';
 import './CardOptionsMenu.css';
 
 const FONT_OPTIONS: { value: FontOption; label: string }[] = [
@@ -47,14 +49,14 @@ const BLOCK_SIZE_OPTIONS: { value: BlockSizeOption; label: string }[] = [
 ];
 
 const DISPLAY_SIDE_OPTIONS: { value: NameDisplaySide; label: string }[] = [
-  { value: 'player', label: 'Игрок' },
-  { value: 'gm', label: 'Мастер' },
+  { value: 'a', label: CARD_SIDE_LABELS.a },
+  { value: 'b', label: CARD_SIDE_LABELS.b },
   { value: 'both', label: 'Обе' },
 ];
 
 const STATS_SIDE_OPTIONS: { value: CardSide; label: string }[] = [
-  { value: 'gm', label: 'Мастер' },
-  { value: 'player', label: 'Игрок' },
+  { value: 'a', label: CARD_SIDE_LABELS.a },
+  { value: 'b', label: CARD_SIDE_LABELS.b },
 ];
 
 const IMAGE_FILL_OPTIONS: { value: ImageFillMode; label: string }[] = [
@@ -86,19 +88,26 @@ function SidePreview({
   side,
   label,
   aspectRatio,
+  onOpen,
 }: {
   card: CharacterCard;
-  side: 'player' | 'gm';
+  side: CardSide;
   label: string;
-  aspectRatio: string;
+  aspectRatio: number;
+  onOpen: (side: CardSide) => void;
 }) {
   return (
-    <div className="preview-side">
+    <button
+      type="button"
+      className="preview-side"
+      onClick={() => onOpen(side)}
+      title="Открыть в полном размере"
+    >
       <span className="side-label">{label}</span>
       <div className="side-image-container" style={{ aspectRatio }}>
         <CardFace card={card} side={side} imageClassName="side-image" />
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -118,7 +127,9 @@ export function CardOptionsMenu({
 }: CardOptionsMenuProps) {
   const { nameSettings, imageFillMode = 'cover' } = card;
   const dndStats = cloneDndStats(card.dndStats);
-  const hangingAspect = `${getCardHeight(cardsPerPage)} / ${getHalfWidth(cardsPerPage)}`;
+  const hangingAspect = getHangingPortraitAspect(cardsPerPage);
+  const [previewSide, setPreviewSide] = useState<CardSide | null>(null);
+  const closePreview = useCallback(() => setPreviewSide(null), []);
 
   const handleRemove = () => {
     onRemove(card.id);
@@ -177,18 +188,29 @@ export function CardOptionsMenu({
         <div className="preview-sides">
           <SidePreview
             card={card}
-            side="player"
-            label="Сторона игрока"
+            side="a"
+            label={CARD_SIDE_LABELS.a}
             aspectRatio={hangingAspect}
+            onOpen={setPreviewSide}
           />
           <SidePreview
             card={card}
-            side="gm"
-            label="Сторона мастера"
+            side="b"
+            label={CARD_SIDE_LABELS.b}
             aspectRatio={hangingAspect}
+            onOpen={setPreviewSide}
           />
         </div>
       </div>
+
+      {previewSide && (
+        <SidePreviewModal
+          card={card}
+          side={previewSide}
+          aspectRatio={hangingAspect}
+          onClose={closePreview}
+        />
+      )}
 
       <div className="options-section">
         <div className="setting-row">

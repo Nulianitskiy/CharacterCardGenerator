@@ -8,13 +8,20 @@ import './ImageUpload.css';
 
 interface ImageUploadProps {
   onImagesUploaded: (cards: CharacterCard[]) => void;
+  variant?: 'zone' | 'tile';
+  aspectRatio?: number;
 }
 
-export function ImageUpload({ onImagesUploaded }: ImageUploadProps) {
+export function ImageUpload({
+  onImagesUploaded,
+  variant = 'zone',
+  aspectRatio,
+}: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isTile = variant === 'tile';
 
   const processFiles = useCallback(
     (files: FileList | null) => {
@@ -97,6 +104,56 @@ export function ImageUpload({ onImagesUploaded }: ImageUploadProps) {
     }
   };
 
+  const fileInput = (
+    <input
+      ref={inputRef}
+      type="file"
+      accept={ACCEPTED_IMAGE_EXTENSIONS}
+      multiple
+      onChange={handleFileChange}
+      className="upload-input"
+      onClick={(e) => e.stopPropagation()}
+    />
+  );
+
+  if (isTile) {
+    return (
+      <div
+        className={`card-add ${isDragging ? 'card-add-active' : ''}`}
+        style={aspectRatio != null ? { aspectRatio } : undefined}
+        role="button"
+        tabIndex={0}
+        aria-label="Добавить карточку"
+        title={error ?? 'Добавить карточку'}
+        onClick={openFilePicker}
+        onKeyDown={handleKeyDown}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+      >
+        {fileInput}
+        <svg
+          className="card-add-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          aria-hidden="true"
+        >
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        <span className="card-add-label">Добавить</span>
+        {error && (
+          <span className="card-add-error" role="alert">
+            Неверный формат
+          </span>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="upload-section-inner">
       <div
@@ -111,15 +168,7 @@ export function ImageUpload({ onImagesUploaded }: ImageUploadProps) {
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
       >
-        <input
-          ref={inputRef}
-          type="file"
-          accept={ACCEPTED_IMAGE_EXTENSIONS}
-          multiple
-          onChange={handleFileChange}
-          className="upload-input"
-          onClick={(e) => e.stopPropagation()}
-        />
+        {fileInput}
         <div className="upload-content">
           <svg
             className="upload-icon"

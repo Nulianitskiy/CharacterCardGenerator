@@ -1,6 +1,7 @@
 import type { CharacterCard } from '../types';
-import type { CardsPerPageOption } from '../constants';
+import { getHangingPortraitAspect, type CardsPerPageOption } from '../constants';
 import { Card } from './Card';
+import { ImageUpload } from './ImageUpload';
 import './CardGrid.css';
 
 interface CardGridProps {
@@ -8,6 +9,7 @@ interface CardGridProps {
   cardsPerPage: CardsPerPageOption;
   onRemoveCard: (id: string) => void;
   onSelectCard: (id: string) => void;
+  onImagesUploaded: (cards: CharacterCard[]) => void;
   selectedCardId: string | null;
 }
 
@@ -16,53 +18,30 @@ export function CardGrid({
   cardsPerPage,
   onRemoveCard,
   onSelectCard,
+  onImagesUploaded,
   selectedCardId,
 }: CardGridProps) {
   if (cards.length === 0) {
-    return (
-      <div className="grid-empty">
-        <p>Пока нет карточек. Загрузите изображения персонажей, чтобы начать!</p>
-      </div>
-    );
+    return <ImageUpload variant="zone" onImagesUploaded={onImagesUploaded} />;
   }
 
-  const pageCount = Math.ceil(cards.length / cardsPerPage);
-
   return (
-    <div className="page-previews">
-      {Array.from({ length: pageCount }, (_, pageIndex) => {
-        const start = pageIndex * cardsPerPage;
-        const pageCards = cards.slice(start, start + cardsPerPage);
-
-        return (
-          <section
-            key={pageIndex}
-            className="a4-page"
-            aria-label={`Страница ${pageIndex + 1} из ${pageCount}`}
-          >
-            <p className="a4-page-label">
-              Страница {pageIndex + 1} из {pageCount}
-            </p>
-            <div className={`a4-sheet a4-sheet-${cardsPerPage}`}>
-              {Array.from({ length: cardsPerPage }, (_, slot) => {
-                const card = pageCards[slot];
-                if (!card) {
-                  return <div key={`empty-${slot}`} className="card-slot-empty" />;
-                }
-                return (
-                  <Card
-                    key={card.id}
-                    card={card}
-                    onRemove={onRemoveCard}
-                    onSelect={onSelectCard}
-                    isSelected={card.id === selectedCardId}
-                  />
-                );
-              })}
-            </div>
-          </section>
-        );
-      })}
+    <div className="card-grid">
+      {cards.map((card) => (
+        <Card
+          key={card.id}
+          card={card}
+          cardsPerPage={cardsPerPage}
+          onRemove={onRemoveCard}
+          onSelect={onSelectCard}
+          isSelected={card.id === selectedCardId}
+        />
+      ))}
+      <ImageUpload
+        variant="tile"
+        aspectRatio={getHangingPortraitAspect(cardsPerPage)}
+        onImagesUploaded={onImagesUploaded}
+      />
     </div>
   );
 }
