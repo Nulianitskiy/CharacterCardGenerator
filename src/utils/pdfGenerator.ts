@@ -6,12 +6,18 @@ import {
   FOLD_LINE_DASH_MM,
   PAGE_MARGIN_X_MM,
   PAGE_MARGIN_Y_MM,
+  getBaseHeight,
   getCardHeight,
   getCardWidth,
+  getFaceHeight,
   getHalfWidth,
   getHalfHeight,
+  getLayoutColumns,
+  getItemsPerPage,
+  isPawnLayout,
   type CardsPerPageOption,
 } from '../constants';
+import { packPawnSheet, type PawnPlacement } from './pawnLayout';
 import { ensureNameFontsLoaded, drawFittedName, getNameSizeScale } from './nameLabelRender';
 import { getPresetOverlay } from './presetOverlays';
 import { layoutImageFill } from './imageFillLayout';
@@ -158,7 +164,43 @@ const renderCardHalfToDataUrl = async (
   return { dataUrl: outputCanvas.toDataURL('image/jpeg', 0.94), format: 'JPEG' };
 };
 
-const drawFoldLine = (
+const renderUprightHalfToDataUrl = (
+  image: PrintImage,
+  widthPx: number,
+  heightPx: number,
+  fillMode: ImageFillMode = 'cover',
+  imageFocus?: ImageFocus,
+  rotate180 = false
+): { dataUrl: string; format: RasterFormat } => {
+  const canvas = document.createElement('canvas');
+  canvas.width = widthPx;
+  canvas.height = heightPx;
+  const ctx = get2dContext(canvas);
+
+  if (rotate180) {
+    ctx.translate(widthPx / 2, heightPx / 2);
+    ctx.rotate(Math.PI);
+    ctx.translate(-widthPx / 2, -heightPx / 2);
+  }
+
+  if (fillMode !== 'cover') {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, widthPx, heightPx);
+  }
+
+  const layout = layoutImageFill(
+    fillMode,
+    widthPx,
+    heightPx,
+    image.width,
+    image.height,
+    imageFocus
+  );
+  ctx.drawImage(image, layout.left, layout.top, layout.width, layout.height);
+  return { dataUrl: canvas.toDataURL('image/jpeg', 0.94), format: 'JPEG' };
+};
+
+const drawVerticalFoldLine = (
   pdf: jsPDF,
   x: number,
   y: number,
@@ -171,39 +213,106 @@ const drawFoldLine = (
   pdf.setLineDashPattern([], 0);
 };
 
+const drawHorizontalFoldLine = (
+  pdf: jsPDF,
+  x: number,
+  y: number,
+  width: number
+) => {
+  pdf.setDrawColor(120, 100, 60);
+  pdf.setLineWidth(FOLD_LINE_WIDTH_MM);
+  pdf.setLineDashPattern([FOLD_LINE_DASH_MM, FOLD_LINE_DASH_MM], 0);
+  pdf.line(x + 0.5, y, x + width - 0.5, y);
+  pdf.setLineDashPattern([], 0);
+};
+
+const drawPawnBase = (
+  pdf: jsPDF,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  dash: 'top' | 'bottom'
+) => {
+  pdf.setDrawColor(90, 80, 60);
+  pdf.setLineWidth(0.25);
+  pdf.setLineDashPattern([], 0);
+  pdf.rect(x, y, width, height);
+
+  pdf.setDrawColor(120, 100, 60);
+  pdf.setLineWidth(FOLD_LINE_WIDTH_MM);
+  pdf.setLineDashPattern([FOLD_LINE_DASH_MM, FOLD_LINE_DASH_MM], 0);
+  const dashY = dash === 'top' ? y : y + height;
+  pdf.line(x + 0.4, dashY, x + width - 0.4, dashY);
+  pdf.setLineDashPattern([], 0);
+};
+
 const drawCutLines = (
   pdf: jsPDF,
   cardsOnPage: number,
   cardHeight: number,
   cardsPerPage: CardsPerPageOption
 ) => {
-  pdf.setDrawColor(255, 255, 255);
+  const pawn = isPawnLayout(cardsPerPage);
+  pdf.setDrawColor(pawn ? 90 : 255, pawn ? 80 : 255, pawn ? 60 : 255);
   pdf.setLineWidth(CUT_LINE_WIDTH_MM);
   pdf.setLineDashPattern([], 0);
 
   const mx = PAGE_MARGIN_X_MM;
   const my = PAGE_MARGIN_Y_MM;
+  const columns = getLayoutColumns(cardsPerPage);
+  const cardWidth = getCardWidth(cardsPerPage);
 
-  if (cardsPerPage === 20) {
-    const cardWidth = getCardWidth(cardsPerPage);
-    const rowsOnPage = Math.ceil(cardsOnPage / 2);
-    const contentRight = mx + 2 * cardWidth;
-    const contentBottom = my + rowsOnPage * cardHeight;
+  if (columns > 1) {
+    const rowsOnPage = Math.ceil(cardsOnPage / columns);
+    const lastRowCount =
+      cardsOnPage % columns === 0 ? columns : cardsOnPage % columns;
 
-    pdf.line(mx + cardWidth, my, mx + cardWidth, contentBottom);
+    const rowsInColumn = (col: number): number => {
+      if (col < 0 || col >= columns) return 0;
+      return col < lastRowCount ? rowsOnPage : rowsOnPage - 1;
+    };
 
-    for (let i = 1; i < rowsOnPage; i++) {
-      const y = my + i * cardHeight;
-      pdf.line(mx, y, contentRight, y);
+    const colsInRow = (row: number): number => {
+      if (row < 0 || row >= rowsOnPage) return 0;
+      return row === rowsOnPage - 1 ? lastRowCount : columns;
+    };
+
+    for (let c = 0; c <= columns; c++) {
+      const rows = Math.max(rowsInColumn(c - 1), rowsInColumn(c));
+      if (rows <= 0) continue;
+      const x = mx + c * cardWidth;
+      pdf.line(x, my, x, my + rows * cardHeight);
+    }
+
+    for (let r = 1; r < rowsOnPage; r++) {
+      const cols = Math.max(colsInRow(r - 1), colsInRow(r));
+      const y = my + r * cardHeight;
+      pdf.line(mx, y, mx + cols * cardWidth, y);
     }
   } else {
-    const cardWidth = getCardWidth(cardsPerPage);
     const contentRight = mx + cardWidth;
 
     for (let i = 1; i < cardsOnPage; i++) {
       const y = my + i * cardHeight;
       pdf.line(mx, y, contentRight, y);
     }
+  }
+};
+
+const drawPawnOutlines = (
+  pdf: jsPDF,
+  placements: PawnPlacement[],
+  cellWidth: number,
+  cellHeight: number
+) => {
+  pdf.setDrawColor(90, 80, 60);
+  pdf.setLineWidth(CUT_LINE_WIDTH_MM);
+  pdf.setLineDashPattern([], 0);
+  for (const placement of placements) {
+    const x = PAGE_MARGIN_X_MM + placement.col * cellWidth;
+    const y = PAGE_MARGIN_Y_MM + placement.row * cellHeight;
+    pdf.rect(x, y, placement.colSpan * cellWidth, placement.rowSpan * cellHeight);
   }
 };
 
@@ -224,104 +333,143 @@ export const generatePDF = async (
     format: 'a4',
   });
 
+  const pawn = isPawnLayout(cardsPerPage);
+  const itemsPerPage = getItemsPerPage(cardsPerPage);
   const cardHeight = getCardHeight(cardsPerPage);
   const cardWidth = getCardWidth(cardsPerPage);
   const halfWidth = getHalfWidth(cardsPerPage);
   const halfHeight = getHalfHeight(cardsPerPage);
+  const faceHeight = getFaceHeight(cardsPerPage);
+  const baseHeight = getBaseHeight(cardsPerPage);
 
   const pxPerMm = 10;
   const halfGapMm = 1;
   const halfWidthPx = halfWidth * pxPerMm;
   const halfHeightPx = halfHeight * pxPerMm;
 
-  const columnsPerPage = cardsPerPage === 20 ? 2 : 1;
+  if (pawn) {
+    const placements = packPawnSheet(cards);
+    const pageCount = placements[placements.length - 1].page + 1;
+    let completed = 0;
 
-  for (let i = 0; i < cards.length; i++) {
-    const pageIndex = Math.floor(i / cardsPerPage);
-    const positionOnPage = i % cardsPerPage;
+    for (let page = 0; page < pageCount; page++) {
+      if (page > 0) pdf.addPage();
+      const onPage = placements.filter((placement) => placement.page === page);
 
-    if (positionOnPage === 0 && pageIndex > 0) {
-      pdf.addPage();
-    }
+      for (const placement of onPage) {
+        const card = placement.card;
+        const x = PAGE_MARGIN_X_MM + placement.col * cardWidth;
+        const y = PAGE_MARGIN_Y_MM + placement.row * cardHeight;
+        const faceWidth = halfWidth * placement.colSpan;
+        const scaledFaceHeight = faceHeight * placement.rowSpan;
+        const scaledBaseHeight = baseHeight * placement.rowSpan;
+        const sideHeight = scaledFaceHeight + scaledBaseHeight;
+        const foldY = y + sideHeight;
+        const fillMode = card.imageFillMode ?? 'cover';
+        const printWidthPx = halfWidthPx * placement.colSpan;
+        const printHeightPx = halfHeightPx * placement.rowSpan;
+        const printImage = await loadPrintImage(card.imageUrl, printWidthPx, printHeightPx);
 
-    let x: number;
-    let y: number;
-
-    if (cardsPerPage === 20) {
-      const col = positionOnPage % columnsPerPage;
-      const row = Math.floor(positionOnPage / columnsPerPage);
-      x = PAGE_MARGIN_X_MM + col * cardWidth;
-      y = PAGE_MARGIN_Y_MM + row * cardHeight;
-    } else {
-      x = PAGE_MARGIN_X_MM;
-      y = PAGE_MARGIN_Y_MM + positionOnPage * cardHeight;
-    }
-
-    const fillMode = cards[i].imageFillMode ?? 'cover';
-    const nameSettings = cards[i].nameSettings?.enabled
-      ? cards[i].nameSettings
-      : undefined;
-    const stats = cards[i].dndStats;
-    const printImage = await loadPrintImage(cards[i].imageUrl, halfHeightPx, halfWidthPx);
-
-    try {
-      const renderHalf = (isSideB: boolean) => {
-        const side: CardSide = isSideB ? 'b' : 'a';
-        if (stats?.enabled && stats.displaySide === side) {
-          return Promise.resolve(
-            renderDndStatsHalfToDataUrl(halfWidthPx, halfHeightPx, isSideB, cards[i])
+        try {
+          const sideA = renderUprightHalfToDataUrl(
+            printImage,
+            printWidthPx,
+            printHeightPx,
+            fillMode,
+            card.imageFocus,
+            true
           );
+          const sideB = renderUprightHalfToDataUrl(
+            printImage,
+            printWidthPx,
+            printHeightPx,
+            fillMode,
+            card.imageFocus
+          );
+          drawPawnBase(pdf, x, y, faceWidth, scaledBaseHeight, 'bottom');
+          pdf.addImage(sideA.dataUrl, sideA.format, x, y + scaledBaseHeight, faceWidth, scaledFaceHeight);
+          drawHorizontalFoldLine(pdf, x, foldY, faceWidth);
+          pdf.addImage(sideB.dataUrl, sideB.format, x, foldY, faceWidth, scaledFaceHeight);
+          drawPawnBase(pdf, x, foldY + scaledFaceHeight, faceWidth, scaledBaseHeight, 'top');
+        } finally {
+          closePrintImage(printImage);
         }
-        return renderCardHalfToDataUrl(
-          printImage,
-          halfWidthPx,
-          halfHeightPx,
-          isSideB,
-          fillMode,
-          nameSettings,
-          cards[i].imageFocus
-        );
-      };
-      const [sideA, sideB] = await Promise.all([renderHalf(false), renderHalf(true)]);
 
-    let sideBX = x - halfGapMm / 2;
-    let sideAX = x + halfWidth + halfGapMm / 2;
-    let foldX = x + halfWidth;
-    if (cardsPerPage === 20) {
-      const col = positionOnPage % columnsPerPage;
-      if (col === 0) {
-        sideBX = x - halfGapMm;
-        sideAX = x + halfWidth;
-        foldX = x + halfWidth - halfGapMm / 2;
-      } else {
-        sideBX = x;
-        sideAX = x + halfWidth + halfGapMm;
-        foldX = x + halfWidth + halfGapMm / 2;
+        onProgress?.(++completed, cards.length);
+      }
+
+      drawPawnOutlines(pdf, onPage, cardWidth, cardHeight);
+    }
+  } else {
+    for (let i = 0; i < cards.length; i++) {
+      const pageIndex = Math.floor(i / itemsPerPage);
+      const positionOnPage = i % itemsPerPage;
+
+      if (positionOnPage === 0 && pageIndex > 0) {
+        pdf.addPage();
+      }
+
+      const x = PAGE_MARGIN_X_MM;
+      const y = PAGE_MARGIN_Y_MM + positionOnPage * cardHeight;
+      const fillMode = cards[i].imageFillMode ?? 'cover';
+      const nameSettings = cards[i].nameSettings?.enabled
+        ? cards[i].nameSettings
+        : undefined;
+      const stats = cards[i].dndStats;
+      const printImage = await loadPrintImage(
+        cards[i].imageUrl,
+        halfHeightPx,
+        halfWidthPx
+      );
+
+      try {
+        const renderHalf = (isSideB: boolean) => {
+          const side: CardSide = isSideB ? 'b' : 'a';
+          if (stats?.enabled && stats.displaySide === side) {
+            return Promise.resolve(
+              renderDndStatsHalfToDataUrl(halfWidthPx, halfHeightPx, isSideB, cards[i])
+            );
+          }
+          return renderCardHalfToDataUrl(
+            printImage,
+            halfWidthPx,
+            halfHeightPx,
+            isSideB,
+            fillMode,
+            nameSettings,
+            cards[i].imageFocus
+          );
+        };
+        const [sideA, sideB] = await Promise.all([renderHalf(false), renderHalf(true)]);
+
+        const sideBX = x - halfGapMm / 2;
+        const sideAX = x + halfWidth + halfGapMm / 2;
+        const foldX = x + halfWidth;
+
+        pdf.addImage(sideB.dataUrl, sideB.format, sideBX, y, halfWidth, cardHeight);
+        pdf.addImage(sideA.dataUrl, sideA.format, sideAX, y, halfWidth, cardHeight);
+        drawVerticalFoldLine(pdf, foldX, y, cardHeight);
+        onProgress?.(i + 1, cards.length);
+      } finally {
+        closePrintImage(printImage);
       }
     }
 
-    pdf.addImage(sideB.dataUrl, sideB.format, sideBX, y, halfWidth, cardHeight);
-    pdf.addImage(sideA.dataUrl, sideA.format, sideAX, y, halfWidth, cardHeight);
-
-    drawFoldLine(pdf, foldX, y, cardHeight);
-    onProgress?.(i + 1, cards.length);
-    } finally {
-      closePrintImage(printImage);
+    const totalPages = Math.ceil(cards.length / itemsPerPage);
+    for (let page = 0; page < totalPages; page++) {
+      pdf.setPage(page + 1);
+      const cardsOnThisPage = Math.min(
+        itemsPerPage,
+        cards.length - page * itemsPerPage
+      );
+      drawCutLines(pdf, cardsOnThisPage, cardHeight, cardsPerPage);
     }
   }
 
-  const totalPages = Math.ceil(cards.length / cardsPerPage);
-  for (let page = 0; page < totalPages; page++) {
-    pdf.setPage(page + 1);
-    const cardsOnThisPage = Math.min(
-      cardsPerPage,
-      cards.length - page * cardsPerPage
-    );
-    drawCutLines(pdf, cardsOnThisPage, cardHeight, cardsPerPage);
-  }
-
   const timestamp = new Date().toISOString().slice(0, 10);
-  const filename = `initiative-cards-${cardsPerPage}pp-${timestamp}.pdf`;
+  const filename = pawn
+    ? `pawns-${timestamp}.pdf`
+    : `initiative-cards-${timestamp}.pdf`;
   pdf.setProperties({ title: filename });
   const blob = pdf.output('blob');
   const url = URL.createObjectURL(blob);

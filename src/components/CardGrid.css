@@ -24,10 +24,16 @@
   height: 160px;
   width: auto;
   flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
   border-radius: 8px;
   border: 2px dashed rgba(205, 173, 109, 0.55);
   background: rgba(205, 173, 109, 0.08);
   pointer-events: none;
+}
+
+.card-placeholder-huge {
+  height: 320px;
 }
 
 .card-ghost {
@@ -37,6 +43,8 @@
   z-index: 1000;
   pointer-events: none;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   border-radius: 8px;
   background: #ffffff;
   box-shadow:

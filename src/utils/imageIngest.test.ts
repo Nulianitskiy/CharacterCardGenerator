@@ -60,6 +60,7 @@ describe('card image helpers', () => {
     expect(card.imageFillMode).toBe('cover');
     expect(card.imageFocus).toEqual(DEFAULT_IMAGE_FOCUS);
     expect(card.nameSettings).toEqual(defaultNameSettings);
+    expect(card.pawnSize).toBe('medium');
   });
 
   it('keeps settings when replacing an image and resets focus', () => {

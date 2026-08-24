@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 'react';
 import type { CharacterCard } from '../types';
-import { getHangingPortraitAspect, POINTER_DRAG_THRESHOLD_PX, type CardsPerPageOption } from '../constants';
+import { getSheetSideAspect, isPawnLayout, POINTER_DRAG_THRESHOLD_PX, type CardsPerPageOption } from '../constants';
+import { getPawnCellSpan, getPawnPreviewAspect, resolvePawnSize } from '../utils/pawnLayout';
 import { Card } from './Card';
-import { CardFace } from './CardFace';
+import { CardSideFrame } from './CardSideFrame';
 import { ImageUpload } from './ImageUpload';
 import './CardGrid.css';
 
@@ -202,7 +203,7 @@ export function CardGrid({
     return <ImageUpload variant="zone" onImagesUploaded={onImagesUploaded} />;
   }
 
-  const aspectRatio = getHangingPortraitAspect(cardsPerPage);
+  const aspectRatio = getSheetSideAspect(cardsPerPage);
   const draggedCard = drag ? cards.find((card) => card.id === drag.id) : null;
   const others = drag ? cards.filter((card) => card.id !== drag.id) : cards;
   const slots: Array<{ type: 'card'; card: CharacterCard } | { type: 'placeholder' }> = [];
@@ -221,11 +222,18 @@ export function CardGrid({
     <div ref={gridRef} className={`card-grid${drag ? ' is-reordering' : ''}`}>
       {slots.map((slot) => {
         if (slot.type === 'placeholder') {
+          const draggedSize = draggedCard ? resolvePawnSize(draggedCard) : 'medium';
+          const hugePlaceholder =
+            isPawnLayout(cardsPerPage) && getPawnCellSpan(draggedSize).rows > 1;
+          const placeholderAspect =
+            isPawnLayout(cardsPerPage) && draggedCard
+              ? getPawnPreviewAspect(cardsPerPage, draggedSize)
+              : aspectRatio;
           return (
             <div
               key="placeholder"
-              className="card-placeholder"
-              style={{ aspectRatio }}
+              className={`card-placeholder${hugePlaceholder ? ' card-placeholder-huge' : ''}`}
+              style={{ aspectRatio: placeholderAspect }}
               aria-hidden="true"
             />
           );
@@ -259,7 +267,7 @@ export function CardGrid({
             transform: `translate(${drag.x - drag.offsetX}px, ${drag.y - drag.offsetY}px)`,
           }}
         >
-          <CardFace card={draggedCard} side="a" />
+          <CardSideFrame card={draggedCard} side="a" cardsPerPage={cardsPerPage} />
         </div>
       )}
     </div>

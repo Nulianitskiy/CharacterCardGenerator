@@ -1,5 +1,5 @@
 import type { CharacterCard } from '../types';
-import { DEFAULT_IMAGE_FOCUS, defaultNameSettings } from '../types';
+import { DEFAULT_IMAGE_FOCUS, DEFAULT_PAWN_SIZE, defaultNameSettings } from '../types';
 import { generateId } from './generateId';
 import { createDefaultDndStats } from './dndStats';
 import { get2dContext } from './canvas2d';
@@ -30,6 +30,7 @@ export const createCardFromImageFile = (file: File): CharacterCard => ({
   imageFillMode: 'cover',
   imageFocus: { ...DEFAULT_IMAGE_FOCUS },
   dndStats: createDefaultDndStats(),
+  pawnSize: DEFAULT_PAWN_SIZE,
 });
 
 export const applyReplacedImage = (card: CharacterCard, file: File): CharacterCard => {

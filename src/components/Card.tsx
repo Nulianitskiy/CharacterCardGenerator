@@ -1,7 +1,8 @@
 import { useState, type DragEvent, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import { CARD_SIDE_LABELS, type CardSide, type CharacterCard } from '../types';
-import { getHangingPortraitAspect, type CardsPerPageOption } from '../constants';
-import { CardFace } from './CardFace';
+import { getSheetSideAspect, isPawnLayout, type CardsPerPageOption } from '../constants';
+import { getPawnCellSpan, getPawnPreviewAspect, resolvePawnSize } from '../utils/pawnLayout';
+import { CardSideFrame } from './CardSideFrame';
 import './Card.css';
 
 interface CardProps {
@@ -18,16 +19,18 @@ function HoverTip({
   card,
   side,
   aspectRatio,
+  cardsPerPage,
 }: {
   card: CharacterCard;
   side: CardSide;
   aspectRatio: number;
+  cardsPerPage: CardsPerPageOption;
 }) {
   return (
     <div className="card-hover-tip">
       <span className="card-hover-tip-label">{CARD_SIDE_LABELS[side]}</span>
       <div className="card-hover-tip-face" style={{ aspectRatio }}>
-        <CardFace card={card} side={side} />
+        <CardSideFrame card={card} side={side} cardsPerPage={cardsPerPage} />
       </div>
     </div>
   );
@@ -45,7 +48,12 @@ export function Card({
   onPointerDragStart,
   onFilesDropped,
 }: CardProps) {
-  const aspectRatio = getHangingPortraitAspect(cardsPerPage);
+  const pawnSize = resolvePawnSize(card);
+  const isPawn = isPawnLayout(cardsPerPage);
+  const aspectRatio = isPawn
+    ? getPawnPreviewAspect(cardsPerPage, pawnSize)
+    : getSheetSideAspect(cardsPerPage);
+  const isHugePawn = isPawn && getPawnCellSpan(pawnSize).rows > 1;
   const [fileOver, setFileOver] = useState(false);
   const [tipsOpen, setTipsOpen] = useState(false);
 
@@ -97,7 +105,7 @@ export function Card({
 
   return (
     <div
-      className={`card-wrap${fileOver ? ' card-wrap-file-over' : ''}`}
+      className={`card-wrap${fileOver ? ' card-wrap-file-over' : ''}${isHugePawn ? ' card-wrap-huge' : ''}`}
       data-card-id={card.id}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
@@ -110,21 +118,21 @@ export function Card({
     >
       {tipsOpen && (
         <div className="card-hover-tips" aria-hidden="true">
-          <HoverTip card={card} side="a" aspectRatio={aspectRatio} />
-          <HoverTip card={card} side="b" aspectRatio={aspectRatio} />
+          <HoverTip card={card} side="a" aspectRatio={aspectRatio} cardsPerPage={cardsPerPage} />
+          <HoverTip card={card} side="b" aspectRatio={aspectRatio} cardsPerPage={cardsPerPage} />
         </div>
       )}
       <article
-        className={`card ${isSelected ? 'card-selected' : ''}${fileOver ? ' card-file-drop' : ''}`}
+        className={`card ${isSelected ? 'card-selected' : ''}${fileOver ? ' card-file-drop' : ''}${isHugePawn ? ' card-pawn-huge' : ''}`}
         style={{ aspectRatio }}
         onClick={() => onSelect(card.id)}
         onPointerDown={handlePointerDown}
         onKeyDown={handleKeyDown}
         tabIndex={0}
         aria-pressed={isSelected}
-        aria-label={card.nameSettings.name.trim() || 'Карточка персонажа'}
+        aria-label={card.nameSettings.name.trim() || (isHugePawn ? 'Огромный павн' : 'Карточка персонажа')}
       >
-        <CardFace card={card} side="a" />
+        <CardSideFrame card={card} side="a" cardsPerPage={cardsPerPage} />
         <button
           type="button"
           className="card-remove"

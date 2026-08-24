@@ -52,6 +52,8 @@
 
 .card-hover-tip-face {
   position: relative;
+  display: flex;
+  flex-direction: column;
   height: 96px;
   width: auto;
   overflow: hidden;
@@ -63,6 +65,8 @@
 
 .card {
   position: relative;
+  display: flex;
+  flex-direction: column;
   height: 160px;
   width: auto;
   flex: 0 0 auto;
@@ -78,6 +82,10 @@
     0 2px 6px rgba(0, 0, 0, 0.3);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   container-type: size;
+}
+
+.card-pawn-huge {
+  height: 320px;
 }
 
 .card:hover,

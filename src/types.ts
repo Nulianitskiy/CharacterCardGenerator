@@ -94,6 +94,14 @@ export interface ImageFocus {
 export const DEFAULT_IMAGE_FOCUS: ImageFocus = { x: 0.5, y: 0.5 };
 
 /**
+ * Pawn print size on the sheet grid.
+ * Medium: 1×1 cell. Large: 2 cells wide. Huge: 2×2 cells (twice a medium in both directions).
+ */
+export type PawnSize = 'medium' | 'large' | 'huge';
+
+export const DEFAULT_PAWN_SIZE: PawnSize = 'medium';
+
+/**
  * Settings for the character name display
  */
 export interface NameSettings {
@@ -119,6 +127,8 @@ export interface CharacterCard {
   imageFocus?: ImageFocus;
   /** Optional D&D stat block replacing one card face */
   dndStats?: DndStatsSettings;
+  /** Pawn size on the sheet; ignored for initiative cards */
+  pawnSize?: PawnSize;
 }
 
 /**

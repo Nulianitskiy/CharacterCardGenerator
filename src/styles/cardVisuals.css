@@ -24,6 +24,42 @@
   inset: 0;
 }
 
+.card-side-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-side-face {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.card-side-frame.is-pawn .card-side-face {
+  flex: 2 1 0;
+}
+
+.pawn-base {
+  flex: 1 1 0;
+  min-height: 0;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      #f7f1e4 0,
+      #f7f1e4 6px,
+      #efe6d4 6px,
+      #efe6d4 12px
+    );
+  border-top: 1px dashed rgba(120, 100, 60, 0.75);
+  box-shadow: inset 0 0 0 1px rgba(120, 100, 60, 0.4);
+}
+
 .card-image,
 .side-image {
   display: block;

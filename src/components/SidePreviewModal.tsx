@@ -1,17 +1,19 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { CARD_SIDE_LABELS, type CardSide, type CharacterCard } from '../types';
-import { CardFace } from './CardFace';
+import type { CardsPerPageOption } from '../constants';
+import { CardSideFrame } from './CardSideFrame';
 import './SidePreviewModal.css';
 
 interface SidePreviewModalProps {
   card: CharacterCard;
   side: CardSide;
   aspectRatio: number;
+  cardsPerPage: CardsPerPageOption;
   onClose: () => void;
 }
 
-export function SidePreviewModal({ card, side, aspectRatio, onClose }: SidePreviewModalProps) {
+export function SidePreviewModal({ card, side, aspectRatio, cardsPerPage, onClose }: SidePreviewModalProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export function SidePreviewModal({ card, side, aspectRatio, onClose }: SidePrevi
             width: `min(88vw, calc(82vh * ${aspectRatio}))`,
           }}
         >
-          <CardFace card={card} side={side} />
+          <CardSideFrame card={card} side={side} cardsPerPage={cardsPerPage} />
         </div>
       </div>
     </div>,

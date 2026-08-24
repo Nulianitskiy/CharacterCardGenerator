@@ -5,10 +5,11 @@ import { generatePDF } from './utils/pdfGenerator';
 import { generateId } from './utils/generateId';
 import { cloneDndStats } from './utils/dndStats';
 import { pluralRu } from './utils/pluralRu';
-import type { CharacterCard, NameSettings, ImageFillMode, ImageFocus, DndStatsSettings } from './types';
+import type { CharacterCard, NameSettings, ImageFillMode, ImageFocus, DndStatsSettings, PawnSize } from './types';
 import { DEFAULT_IMAGE_FOCUS } from './types';
 import { applyReplacedImage, filesFromClipboard, ingestImageFiles, ingestReplacementAndExtras } from './utils/imageIngest';
-import type { CardsPerPageOption } from './constants';
+import { isPawnLayout, getItemsPerPage, PAWNS_PER_PAGE, type CardsPerPageOption } from './constants';
+import { pawnPageCount } from './utils/pawnLayout';
 import './styles/cardVisuals.css';
 import './App.css';
 
@@ -212,6 +213,12 @@ function App() {
     );
   }, []);
 
+  const handleUpdatePawnSize = useCallback((id: string, pawnSize: PawnSize) => {
+    setCards((prev) =>
+      prev.map((card) => (card.id === id ? { ...card, pawnSize } : card))
+    );
+  }, []);
+
   const handleClearAll = useCallback(() => {
     if (
       !window.confirm('Удалить все карточки? Это действие нельзя отменить.')
@@ -296,7 +303,11 @@ function App() {
     }
   }, [cards, cardsPerPage]);
 
-  const pageCount = Math.ceil(cards.length / cardsPerPage);
+  const itemsPerPage = getItemsPerPage(cardsPerPage);
+  const pawnMode = isPawnLayout(cardsPerPage);
+  const pageCount = pawnMode
+    ? pawnPageCount(cards)
+    : Math.ceil(cards.length / itemsPerPage);
 
   const selectedCard = selectedCardId ? cards.find((c) => c.id === selectedCardId) : null;
   const selectedIndex = selectedCardId ? cards.findIndex((c) => c.id === selectedCardId) : -1;
@@ -314,7 +325,7 @@ function App() {
         <main className="main">
           <section className="layout-section">
             <div className="layout-toggle">
-              <span className="layout-label">Карточек на странице:</span>
+              <span className="layout-label">Режим:</span>
               <div className="toggle-buttons">
                 <button
                   type="button"
@@ -322,8 +333,8 @@ function App() {
                   aria-pressed={cardsPerPage === 4}
                   onClick={() => setCardsPerPage(4)}
                 >
-                  4 карточки
-                  <span className="toggle-hint">крупнее</span>
+                  Инициативки
+                  <span className="toggle-hint">4 на лист</span>
                 </button>
                 <button
                   type="button"
@@ -331,8 +342,8 @@ function App() {
                   aria-pressed={cardsPerPage === 20}
                   onClick={() => setCardsPerPage(20)}
                 >
-                  20 карточек
-                  <span className="toggle-hint">мини</span>
+                  Павны
+                  <span className="toggle-hint">до {PAWNS_PER_PAGE} на лист</span>
                 </button>
               </div>
             </div>
@@ -342,7 +353,7 @@ function App() {
             {cards.length > 0 && (
               <div className="preview-header">
                 <h2 className="preview-title">
-                  Карточки
+                  {pawnMode ? 'Павны' : 'Карточки'}
                   <span className="card-count">
                     {cards.length} {pluralRu(cards.length, 'изображение', 'изображения', 'изображений')} • {pageCount} {pluralRu(pageCount, 'страница', 'страницы', 'страниц')}
                   </span>
@@ -411,7 +422,9 @@ function App() {
 
         <footer className="footer">
           <p>
-            Горизонтальные складывающиеся карточки • {cardsPerPage} {pluralRu(cardsPerPage, 'карточка', 'карточки', 'карточек')} на лист A4 • сложите по вертикали и повесьте на ширму мастера
+            {pawnMode
+              ? `Складывающиеся павны • до ${PAWNS_PER_PAGE} средних на лист A4 • сложите по линии посередине и вырежьте подставку`
+              : 'Горизонтальные складывающиеся карточки • 4 карточки на лист A4 • сложите по вертикали и повесьте на ширму мастера'}
           </p>
         </footer>
       </div>
@@ -431,6 +444,7 @@ function App() {
             onUpdateImageFillMode={handleUpdateImageFillMode}
             onUpdateImageFocus={handleUpdateImageFocus}
             onUpdateDndStats={handleUpdateDndStats}
+            onUpdatePawnSize={handleUpdatePawnSize}
             onReplaceImage={handleReplaceCardFiles}
             canMoveUp={selectedIndex > 0}
             canMoveDown={selectedIndex < cards.length - 1}

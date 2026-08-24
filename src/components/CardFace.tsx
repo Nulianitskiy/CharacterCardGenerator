@@ -8,6 +8,7 @@ interface CardFaceProps {
   side: CardSide;
   imageClassName?: string;
   pannable?: boolean;
+  overlaysEnabled?: boolean;
   onImageFocusChange?: (focus: ImageFocus) => void;
   onPortraitClick?: () => void;
 }
@@ -17,11 +18,12 @@ export function CardFace({
   side,
   imageClassName = 'card-image',
   pannable = false,
+  overlaysEnabled = true,
   onImageFocusChange,
   onPortraitClick,
 }: CardFaceProps) {
   const stats = card.dndStats;
-  const showStats = Boolean(stats?.enabled && stats.displaySide === side);
+  const showStats = overlaysEnabled && Boolean(stats?.enabled && stats.displaySide === side);
 
   if (showStats && stats) {
     return (
@@ -34,6 +36,7 @@ export function CardFace({
   }
 
   const showName =
+    overlaysEnabled &&
     card.nameSettings.enabled &&
     card.nameSettings.name.trim() !== '' &&
     (card.nameSettings.displaySide === side || card.nameSettings.displaySide === 'both');

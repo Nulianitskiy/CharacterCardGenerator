@@ -1,7 +1,8 @@
 import { useCallback, useState, type KeyboardEvent } from 'react';
 import { CARD_SIDE_LABELS, type CardSide, type CharacterCard, type ImageFillMode, type ImageFocus } from '../../types';
-import { getHangingPortraitAspect, type CardsPerPageOption } from '../../constants';
-import { CardFace } from '../CardFace';
+import { getSheetSideAspect, isPawnLayout, type CardsPerPageOption } from '../../constants';
+import { getPawnPreviewAspect, resolvePawnSize } from '../../utils/pawnLayout';
+import { CardSideFrame } from '../CardSideFrame';
 import { SidePreviewModal } from '../SidePreviewModal';
 import { IMAGE_FILL_OPTIONS } from './optionLists';
 
@@ -10,6 +11,7 @@ function SidePreview({
   side,
   label,
   aspectRatio,
+  cardsPerPage,
   onOpen,
   onImageFocusChange,
 }: {
@@ -17,10 +19,13 @@ function SidePreview({
   side: CardSide;
   label: string;
   aspectRatio: number;
+  cardsPerPage: CardsPerPageOption;
   onOpen: (side: CardSide) => void;
   onImageFocusChange: (focus: ImageFocus) => void;
 }) {
-  const isStats = Boolean(card.dndStats?.enabled && card.dndStats.displaySide === side);
+  const isStats =
+    !isPawnLayout(cardsPerPage) &&
+    Boolean(card.dndStats?.enabled && card.dndStats.displaySide === side);
   const canPan = !isStats && (card.imageFillMode ?? 'cover') === 'cover';
   const open = () => onOpen(side);
 
@@ -48,9 +53,10 @@ function SidePreview({
         <span className="side-label">{label}</span>
       )}
       <div className="side-image-container" style={{ aspectRatio }}>
-        <CardFace
+        <CardSideFrame
           card={card}
           side={side}
+          cardsPerPage={cardsPerPage}
           imageClassName="side-image"
           pannable={canPan}
           onImageFocusChange={canPan ? onImageFocusChange : undefined}
@@ -75,7 +81,9 @@ export function CardOptionsPreview({
   onUpdateImageFocus,
 }: CardOptionsPreviewProps) {
   const imageFillMode = card.imageFillMode ?? 'cover';
-  const hangingAspect = getHangingPortraitAspect(cardsPerPage);
+  const sheetAspect = isPawnLayout(cardsPerPage)
+    ? getPawnPreviewAspect(cardsPerPage, resolvePawnSize(card))
+    : getSheetSideAspect(cardsPerPage);
   const [previewSide, setPreviewSide] = useState<CardSide | null>(null);
   const closePreview = useCallback(() => setPreviewSide(null), []);
 
@@ -87,7 +95,8 @@ export function CardOptionsPreview({
             card={card}
             side="a"
             label={CARD_SIDE_LABELS.a}
-            aspectRatio={hangingAspect}
+            aspectRatio={sheetAspect}
+            cardsPerPage={cardsPerPage}
             onOpen={setPreviewSide}
             onImageFocusChange={(focus) => onUpdateImageFocus(card.id, focus)}
           />
@@ -95,7 +104,8 @@ export function CardOptionsPreview({
             card={card}
             side="b"
             label={CARD_SIDE_LABELS.b}
-            aspectRatio={hangingAspect}
+            aspectRatio={sheetAspect}
+            cardsPerPage={cardsPerPage}
             onOpen={setPreviewSide}
             onImageFocusChange={(focus) => onUpdateImageFocus(card.id, focus)}
           />
@@ -106,7 +116,8 @@ export function CardOptionsPreview({
         <SidePreviewModal
           card={card}
           side={previewSide}
-          aspectRatio={hangingAspect}
+          aspectRatio={sheetAspect}
+          cardsPerPage={cardsPerPage}
           onClose={closePreview}
         />
       )}

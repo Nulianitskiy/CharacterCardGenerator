@@ -7,8 +7,26 @@
 export const A4_WIDTH_MM = 210;
 export const A4_HEIGHT_MM = 297;
 
-// Layout options
+// Layout options: 4 initiative cards or pawn sheet
 export type CardsPerPageOption = 4 | 20;
+
+export const isPawnLayout = (cardsPerPage: CardsPerPageOption): boolean =>
+  cardsPerPage === 20;
+
+/** Pawns: stacked A / fold / B, 8 columns × 2 rows */
+export const PAWN_COLUMNS = 8;
+export const PAWN_ROWS = 2;
+
+/** Cut-out stand is one third of the standing pawn (face + stand). */
+export const PAWN_BASE_FRACTION_OF_PAWN = 1 / 3;
+
+export const PAWN_BASE_TO_FACE_RATIO =
+  PAWN_BASE_FRACTION_OF_PAWN / (1 - PAWN_BASE_FRACTION_OF_PAWN);
+
+export const PAWNS_PER_PAGE = PAWN_COLUMNS * PAWN_ROWS;
+
+export const getItemsPerPage = (cardsPerPage: CardsPerPageOption): number =>
+  isPawnLayout(cardsPerPage) ? PAWNS_PER_PAGE : 4;
 
 // Cut line width (white lines between cards for cutting guide)
 export const CUT_LINE_WIDTH_MM = 0.5;
@@ -28,48 +46,81 @@ export const CONTENT_HEIGHT_MM = A4_HEIGHT_MM - 2 * PAGE_MARGIN_Y_MM;
 // Card width matches content area (not full A4 width)
 export const CARD_WIDTH_MM = CONTENT_WIDTH_MM;
 
+export const getLayoutColumns = (cardsPerPage: CardsPerPageOption): number =>
+  isPawnLayout(cardsPerPage) ? PAWN_COLUMNS : 1;
+
+export const getLayoutRows = (cardsPerPage: CardsPerPageOption): number =>
+  isPawnLayout(cardsPerPage) ? PAWN_ROWS : 4;
+
 /**
- * Calculate card height based on cards per page
- * For 20 cards: 2 columns × 10 rows
+ * Full cell height on the sheet (initiative: hanging strip; pawns: two stacked sides).
  */
 export const getCardHeight = (cardsPerPage: CardsPerPageOption): number => {
-  if (cardsPerPage === 20) {
-    return CONTENT_HEIGHT_MM / 10;
-  }
-  return CONTENT_HEIGHT_MM / 4;
+  return CONTENT_HEIGHT_MM / getLayoutRows(cardsPerPage);
 };
 
 // Default card heights for each layout (within vertical margins)
 export const CARD_HEIGHT_4_MM = CONTENT_HEIGHT_MM / 4;
-export const CARD_HEIGHT_20_MM = CONTENT_HEIGHT_MM / 10;
+export const CARD_HEIGHT_20_MM = CONTENT_HEIGHT_MM / PAWN_ROWS;
 
-// Card width (full page width for 4 cards, half for 20 cards)
 export const getCardWidth = (cardsPerPage: CardsPerPageOption): number => {
-  if (cardsPerPage === 20) {
-    return CARD_WIDTH_MM / 2;
-  }
-  return CARD_WIDTH_MM;
+  return CONTENT_WIDTH_MM / getLayoutColumns(cardsPerPage);
 };
 
 /**
- * Get half width based on cards per page (for each image section within a card)
+ * Width of one illustrated face.
+ * Initiative cards place two faces side by side; pawns use the full cell width.
  */
 export const getHalfWidth = (cardsPerPage: CardsPerPageOption): number => {
+  if (isPawnLayout(cardsPerPage)) {
+    return getCardWidth(cardsPerPage);
+  }
   return getCardWidth(cardsPerPage) / 2;
 };
 
 /**
- * Get half height based on cards per page
+ * Height of the illustrated face. Pawns reserve extra height for a cut tab
+ * on each stacked side (A above the fold, B below).
  */
-export const getHalfHeight = (cardsPerPage: CardsPerPageOption): number => {
+export const getFaceHeight = (cardsPerPage: CardsPerPageOption): number => {
+  if (isPawnLayout(cardsPerPage)) {
+    return getCardHeight(cardsPerPage) / 2 / (1 + PAWN_BASE_TO_FACE_RATIO);
+  }
   return getCardHeight(cardsPerPage);
 };
 
+export const getBaseHeight = (cardsPerPage: CardsPerPageOption): number => {
+  if (isPawnLayout(cardsPerPage)) {
+    return getFaceHeight(cardsPerPage) * PAWN_BASE_TO_FACE_RATIO;
+  }
+  return 0;
+};
+
 /**
- * CSS aspect-ratio of a hanging portrait face (width / height).
+ * Print height of one illustrated half (same as face height).
+ */
+export const getHalfHeight = (cardsPerPage: CardsPerPageOption): number => {
+  return getFaceHeight(cardsPerPage);
+};
+
+/**
+ * CSS aspect-ratio of one illustrated face as it appears in use (width / height).
  */
 export const getHangingPortraitAspect = (cardsPerPage: CardsPerPageOption): number => {
+  if (isPawnLayout(cardsPerPage)) {
+    return getHalfWidth(cardsPerPage) / getFaceHeight(cardsPerPage);
+  }
   return getCardHeight(cardsPerPage) / getHalfWidth(cardsPerPage);
+};
+
+/**
+ * CSS aspect-ratio of one sheet side, including the pawn cut tab.
+ */
+export const getSheetSideAspect = (cardsPerPage: CardsPerPageOption): number => {
+  if (isPawnLayout(cardsPerPage)) {
+    return getHalfWidth(cardsPerPage) / (getFaceHeight(cardsPerPage) + getBaseHeight(cardsPerPage));
+  }
+  return getHangingPortraitAspect(cardsPerPage);
 };
 
 // Fold line settings
