@@ -2,7 +2,7 @@ import type { FontOption, DndStatsSettings } from '../types';
 import {
   ABILITY_KEYS,
   ABILITY_SHEET_LABELS,
-  abilityModifier,
+  formatModifier,
   formatStat,
   getCombatStatValue,
 } from '../utils/dndStats';
@@ -70,10 +70,12 @@ export function DndStatsPanel({ stats, name, font }: DndStatsPanelProps) {
             return (
               <div key={key} className="sheet-ability">
                 <span className="sheet-ability-name">{ABILITY_SHEET_LABELS[key]}</span>
-                <span className="sheet-ability-score">{formatStat(score)}</span>
-                <span className="sheet-ability-mod">
-                  {score == null ? '' : formatStat(abilityModifier(score), true)}
-                </span>
+                <div className="sheet-ability-value">
+                  <span className="sheet-ability-score">{formatStat(score)}</span>
+                  {score != null && (
+                    <span className="sheet-ability-mod">{formatModifier(score)}</span>
+                  )}
+                </div>
               </div>
             );
           })}

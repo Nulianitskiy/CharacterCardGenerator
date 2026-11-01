@@ -47,6 +47,8 @@ export const formatStat = (value: number | null, signed = false): string => {
   return signed ? formatSigned(value) : String(value);
 };
 
+export const formatModifier = (score: number): string => `(${formatSigned(abilityModifier(score))})`;
+
 export const createDefaultDndStats = (): DndStatsSettings => ({
   enabled: false,
   displaySide: 'b',

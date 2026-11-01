@@ -3,7 +3,7 @@ import { getCanvasFont } from './nameLabelRender';
 import {
   ABILITY_KEYS,
   ABILITY_SHEET_LABELS,
-  abilityModifier,
+  formatModifier,
   formatStat,
   getCombatStatValue,
 } from './dndStats';
@@ -125,12 +125,37 @@ const drawAbilityBox = (
   ctx.font = `700 ${Math.max(7, h * 0.16)}px Cinzel, Georgia, serif`;
   drawCenteredText(ctx, label, x + w / 2, y + h * 0.18, w * 0.9);
 
-  ctx.font = `700 ${Math.max(12, h * 0.4)}px Cinzel, Georgia, serif`;
-  drawCenteredText(ctx, formatStat(score), x + w / 2, y + h * 0.54, w * 0.9);
+  // Value with the parenthesized modifier to its right, centered as one group
+  // and vertically middle-aligned with the value.
+  const valueText = formatStat(score);
+  const modifier = score == null ? '' : formatModifier(score);
+  const valueFont = `700 ${Math.max(12, h * 0.4)}px Cinzel, Georgia, serif`;
+  const modFont = `600 ${Math.max(9, h * 0.23)}px "Crimson Pro", Georgia, serif`;
 
-  const modifier = score == null ? '' : formatStat(abilityModifier(score), true);
-  ctx.font = `600 ${Math.max(8, h * 0.16)}px "Crimson Pro", Georgia, serif`;
-  drawCenteredText(ctx, modifier, x + w / 2, y + h * 0.84, w * 0.9);
+  ctx.font = valueFont;
+  const valueW = ctx.measureText(valueText).width;
+  let modW = 0;
+  if (modifier) {
+    ctx.font = modFont;
+    modW = ctx.measureText(modifier).width;
+  }
+  const modGap = modifier ? Math.max(1.5, h * 0.035) : 0;
+  const totalW = valueW + modGap + modW;
+  const maxWidth = w * 0.9;
+  const scale = totalW > maxWidth ? maxWidth / totalW : 1;
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  const centerY = y + h * 0.54;
+  let cursorX = x + (w - totalW * scale) / 2;
+  ctx.font = valueFont;
+  ctx.fillText(valueText, cursorX, centerY, valueW * scale);
+  cursorX += valueW * scale;
+  if (modifier) {
+    cursorX += modGap * scale;
+    ctx.font = modFont;
+    ctx.fillText(modifier, cursorX, centerY, modW * scale);
+  }
 };
 
 const drawLabeledField = (

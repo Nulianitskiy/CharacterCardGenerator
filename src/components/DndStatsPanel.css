@@ -126,7 +126,7 @@
 
 .sheet-ability {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr;
   justify-items: center;
   min-height: 0;
   padding: 0.4cqh 0.5cqw 0.5cqh;
@@ -141,12 +141,17 @@
   text-align: center;
 }
 
-.sheet-ability-score {
+.sheet-ability-value {
+  align-self: center;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5cqw;
   width: 100%;
   min-height: 0;
+}
+
+.sheet-ability-score {
   font-family: Cinzel, Georgia, serif;
   font-weight: 700;
   font-size: 4cqh;
@@ -155,10 +160,9 @@
 
 .sheet-ability-mod {
   font-family: 'Crimson Pro', Georgia, serif;
-  font-size: 1.8cqh;
+  font-size: 2.3cqh;
   font-weight: 600;
   line-height: 1;
-  min-height: 1.8cqh;
 }
 
 .sheet-right {

@@ -5,6 +5,7 @@ import {
   clampAc,
   cloneDndStats,
   createDefaultDndStats,
+  formatModifier,
   formatSigned,
   formatStat,
   withUpdatedAbility,
@@ -38,6 +39,15 @@ describe('formatStat', () => {
     expect(formatStat(null, true)).toBe('');
     expect(formatStat(15)).toBe('15');
     expect(formatStat(2, true)).toBe('+2');
+  });
+});
+
+describe('formatModifier', () => {
+  it('wraps the derived ability modifier in parentheses', () => {
+    expect(formatModifier(14)).toBe('(+2)');
+    expect(formatModifier(8)).toBe('(-1)');
+    expect(formatModifier(10)).toBe('(+0)');
+    expect(formatModifier(3)).toBe('(-4)');
   });
 });
 
