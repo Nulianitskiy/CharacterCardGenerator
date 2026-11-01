@@ -1,5 +1,14 @@
-import type { CharacterCard, NameSettings } from '../../types';
-import { BLOCK_SIZE_OPTIONS, DISPLAY_SIDE_OPTIONS, FONT_OPTIONS, FULL_PRESETS, LOWER_PRESETS } from './optionLists';
+import { useState } from 'react';
+import {
+  MAX_NAME_FONT_SIZE_PERCENT,
+  MIN_NAME_FONT_SIZE_PERCENT,
+  type CharacterCard,
+  type NameSettings,
+} from '../../types';
+import { clampNameFontSizePercent } from '../../utils/nameLabelRender';
+import { getNameCssOverride, isLocalNameFont } from '../../utils/nameFont';
+import { DISPLAY_SIDE_OPTIONS, FULL_PRESETS, LOWER_PRESETS } from './optionLists';
+import { FontPicker } from './FontPicker';
 
 interface CardOptionsNameSectionProps {
   card: CharacterCard;
@@ -33,7 +42,8 @@ export function CardOptionsNameSection({ card, onUpdateNameSettings }: CardOptio
             <input
               id="character-name"
               type="text"
-              className={`setting-input font-${nameSettings.font}`}
+              className={`setting-input ${isLocalNameFont(nameSettings.font) ? '' : `font-${nameSettings.font}`}`}
+              style={getNameCssOverride(nameSettings.font)}
               value={nameSettings.name}
               onChange={(e) => updateNameSetting('name', e.target.value)}
               placeholder="Введите имя персонажа..."
@@ -42,34 +52,24 @@ export function CardOptionsNameSection({ card, onUpdateNameSettings }: CardOptio
 
           <div className="setting-row">
             <span className="setting-label">Шрифт</span>
-            <div className="font-options">
-              {FONT_OPTIONS.map((font) => (
-                <button
-                  key={font.value}
-                  type="button"
-                  className={`font-option font-${font.value} ${nameSettings.font === font.value ? 'active' : ''}`}
-                  onClick={() => updateNameSetting('font', font.value)}
-                >
-                  {font.label}
-                </button>
-              ))}
-            </div>
+            <FontPicker
+              value={nameSettings.font}
+              onChange={(font) => updateNameSetting('font', font)}
+            />
           </div>
 
           <div className="setting-row">
-            <span className="setting-label">Размер блока</span>
-            <div className="block-size-options">
-              {BLOCK_SIZE_OPTIONS.map((size) => (
-                <button
-                  key={size.value}
-                  type="button"
-                  className={`size-option ${nameSettings.blockSize === size.value ? 'active' : ''}`}
-                  onClick={() => updateNameSetting('blockSize', size.value)}
-                >
-                  {size.label}
-                </button>
-              ))}
-            </div>
+            <label className="setting-label" htmlFor="name-font-size">
+              Размер шрифта
+            </label>
+            <FontSizeControl
+              value={nameSettings.fontSizePercent}
+              onCommit={(percent) => updateNameSetting('fontSizePercent', percent)}
+            />
+            <p className="setting-hint">
+              Процент от максимального размера плашки; длинное имя автоматически уменьшится, чтобы
+              поместиться.
+            </p>
           </div>
 
           <div className="setting-row">
@@ -125,6 +125,79 @@ export function CardOptionsNameSection({ card, onUpdateNameSettings }: CardOptio
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+interface FontSizeControlProps {
+  value: number;
+  onCommit: (percent: number) => void;
+}
+
+const FONT_SIZE_STEP = 5;
+
+export function FontSizeControl({ value, onCommit }: FontSizeControlProps) {
+  const [draft, setDraft] = useState(() => String(value));
+  // When the committed value changes from outside (stepper normalization,
+  // switching cards in the modal), refresh the draft; React's render-time
+  // state adjustment instead of an effect.
+  const [lastCommitted, setLastCommitted] = useState(value);
+  if (lastCommitted !== value) {
+    setLastCommitted(value);
+    setDraft(String(value));
+  }
+
+  const commitClamped = (percent: number) => {
+    const clamped = clampNameFontSizePercent(percent);
+    setLastCommitted(clamped);
+    setDraft(String(clamped));
+    onCommit(clamped);
+  };
+
+  const step = (direction: -1 | 1) => {
+    commitClamped(clampNameFontSizePercent(value) + direction * FONT_SIZE_STEP);
+  };
+
+  return (
+    <div className="font-size-control">
+      <button
+        type="button"
+        className="size-option"
+        onClick={() => step(-1)}
+        aria-label="Уменьшить размер шрифта"
+      >
+        −
+      </button>
+      <input
+        id="name-font-size"
+        type="number"
+        className="setting-input setting-input-narrow"
+        min={MIN_NAME_FONT_SIZE_PERCENT}
+        max={MAX_NAME_FONT_SIZE_PERCENT}
+        step={1}
+        value={draft}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          const parsed = Number.parseInt(e.target.value, 10);
+          if (Number.isFinite(parsed)) {
+            setLastCommitted(parsed);
+            onCommit(parsed);
+          }
+        }}
+        onBlur={() => {
+          const parsed = Number.parseInt(draft, 10);
+          commitClamped(Number.isFinite(parsed) ? parsed : value);
+        }}
+      />
+      <span className="font-size-unit">%</span>
+      <button
+        type="button"
+        className="size-option"
+        onClick={() => step(1)}
+        aria-label="Увеличить размер шрифта"
+      >
+        +
+      </button>
     </div>
   );
 }

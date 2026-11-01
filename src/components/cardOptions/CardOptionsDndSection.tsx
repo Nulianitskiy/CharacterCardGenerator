@@ -1,4 +1,5 @@
 import type { AbilityKey, CharacterCard, DndStatsSettings, NameSettings } from '../../types';
+import { getNameCssOverride, isLocalNameFont } from '../../utils/nameFont';
 import {
   ABILITY_KEYS,
   ABILITY_LABELS,
@@ -85,7 +86,8 @@ export function CardOptionsDndSection({
               <input
                 id="dnd-character-name"
                 type="text"
-                className={`setting-input font-${nameSettings.font}`}
+                className={`setting-input ${isLocalNameFont(nameSettings.font) ? '' : `font-${nameSettings.font}`}`}
+                style={getNameCssOverride(nameSettings.font)}
                 value={nameSettings.name}
                 onChange={(e) =>
                   onUpdateNameSettings(card.id, { ...nameSettings, name: e.target.value })

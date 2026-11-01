@@ -1,0 +1,137 @@
+/* Font picker: trigger button + searchable dropdown panel */
+
+.font-picker {
+  position: relative;
+}
+
+.font-picker-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid rgba(205, 173, 109, 0.3);
+  background: rgba(20, 17, 12, 0.6);
+  color: var(--cream);
+  font-size: 0.85rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.font-picker-trigger:hover,
+.font-picker-trigger.open {
+  border-color: var(--gold);
+  background: rgba(205, 173, 109, 0.1);
+}
+
+.font-picker-trigger-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.font-picker-trigger-caret {
+  flex: none;
+  color: var(--gold);
+  font-size: 0.75rem;
+}
+
+.font-picker-panel {
+  margin-top: 0.4rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(205, 173, 109, 0.35);
+  background: rgba(20, 17, 12, 0.97);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.font-picker-search {
+  font-size: 0.85rem;
+}
+
+.font-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-height: 15rem;
+  overflow-y: auto;
+  padding-right: 0.15rem;
+}
+
+.font-picker-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.font-picker-group-label {
+  font-size: 0.7rem;
+  color: var(--gold-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.font-picker-option {
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(205, 173, 109, 0.25);
+  background: rgba(20, 17, 12, 0.6);
+  color: var(--cream);
+  font-size: 0.85rem;
+  line-height: 1.25;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.font-picker-option:hover {
+  border-color: var(--gold);
+  background: rgba(205, 173, 109, 0.1);
+}
+
+.font-picker-option.active {
+  border-color: var(--gold);
+  background: rgba(205, 173, 109, 0.2);
+  color: var(--gold);
+}
+
+.font-picker-action {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px dashed rgba(205, 173, 109, 0.45);
+  background: none;
+  color: var(--gold);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.font-picker-action:hover {
+  border-color: var(--gold);
+  background: rgba(205, 173, 109, 0.08);
+}
+
+.font-picker-action:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.font-picker-hint,
+.font-picker-error {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--cream);
+  opacity: 0.75;
+}
+
+.font-picker-error {
+  color: #e08a8a;
+  opacity: 1;
+}

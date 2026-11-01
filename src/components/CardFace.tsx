@@ -59,7 +59,7 @@ export function CardFace({
           preset={card.nameSettings.background}
           name={card.nameSettings.name}
           font={card.nameSettings.font}
-          blockSize={card.nameSettings.blockSize}
+          fontSizePercent={card.nameSettings.fontSizePercent}
         />
       )}
     </>

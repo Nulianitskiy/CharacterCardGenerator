@@ -149,7 +149,7 @@ const renderCardHalfToDataUrl = async (
           nw,
           nh,
           overlay.textColor,
-          getNameSizeScale(nameSettings.blockSize)
+          getNameSizeScale(nameSettings.fontSizePercent)
         );
       }
     }

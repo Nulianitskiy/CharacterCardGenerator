@@ -12,9 +12,27 @@ export type FontOption =
   | 'bold';
 
 /**
- * Name block size options
+ * A font family installed on the user's device (picked via the font picker,
+ * e.g. through the Local Font Access API). `localFamily` is a sanitized
+ * CSS font-family name.
  */
-export type BlockSizeOption = 'small' | 'medium' | 'large';
+export interface LocalNameFont {
+  readonly localFamily: string;
+}
+
+/**
+ * Name font: one of the built-in presets or any font family found on the device
+ */
+export type NameFontValue = FontOption | LocalNameFont;
+
+/**
+ * Name font size as a percentage of the plate's auto-fit maximum.
+ * 72/86/100 correspond to the former S/M/L presets; longer names still shrink
+ * automatically so they fit the name box.
+ */
+export const MIN_NAME_FONT_SIZE_PERCENT = 25;
+export const MAX_NAME_FONT_SIZE_PERCENT = 300;
+export const DEFAULT_NAME_FONT_SIZE_PERCENT = 100;
 
 /**
  * Decorative frame / name plate presets
@@ -107,8 +125,9 @@ export const DEFAULT_PAWN_SIZE: PawnSize = 'medium';
 export interface NameSettings {
   enabled: boolean;
   name: string;
-  font: FontOption;
-  blockSize: BlockSizeOption;
+  font: NameFontValue;
+  /** Name font size in percent (see MIN/MAX/DEFAULT_NAME_FONT_SIZE_PERCENT) */
+  fontSizePercent: number;
   background: NameBackgroundType;
   displaySide: NameDisplaySide;
 }
@@ -138,7 +157,7 @@ export const defaultNameSettings: NameSettings = {
   enabled: false,
   name: '',
   font: 'medieval',
-  blockSize: 'large',
+  fontSizePercent: DEFAULT_NAME_FONT_SIZE_PERCENT,
   background: 'gothic',
   displaySide: 'a',
 };

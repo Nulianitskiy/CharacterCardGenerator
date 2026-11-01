@@ -269,36 +269,6 @@
   opacity: 1;
 }
 
-.font-options {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.4rem;
-}
-
-.font-option {
-  padding: 0.45rem 0.4rem;
-  border-radius: 6px;
-  border: 1px solid rgba(205, 173, 109, 0.3);
-  background: rgba(20, 17, 12, 0.6);
-  color: var(--cream);
-  font-size: 0.72rem;
-  line-height: 1.2;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: center;
-}
-
-.font-option:hover {
-  border-color: var(--gold);
-  background: rgba(205, 173, 109, 0.1);
-}
-
-.font-option.active {
-  border-color: var(--gold);
-  background: rgba(205, 173, 109, 0.2);
-  color: var(--gold);
-}
-
 .background-options {
   display: flex;
   flex-direction: column;
@@ -353,10 +323,28 @@
 }
 
 .display-side-options,
-.fill-mode-options,
-.block-size-options {
+.fill-mode-options {
   display: flex;
   gap: 0.4rem;
+}
+
+.font-size-control {
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
+.font-size-control .size-option {
+  flex: 0 0 2.4rem;
+  padding: 0.5rem 0;
+}
+
+.font-size-unit {
+  display: flex;
+  align-items: center;
+  color: var(--cream);
+  opacity: 0.75;
+  font-size: 0.85rem;
 }
 
 .side-option,

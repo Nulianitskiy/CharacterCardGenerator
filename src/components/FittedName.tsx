@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import type { BlockSizeOption, FontOption } from '../types';
+import type { NameFontValue } from '../types';
 import {
   ensureNameFontsLoaded,
   getNameSizeScale,
@@ -9,11 +9,11 @@ import {
 
 interface FittedNameProps {
   text: string;
-  font: FontOption;
-  blockSize: BlockSizeOption;
+  font: NameFontValue;
+  fontSizePercent: number;
 }
 
-export function FittedName({ text, font, blockSize }: FittedNameProps) {
+export function FittedName({ text, font, fontSizePercent }: FittedNameProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const [layout, setLayout] = useState(() => ({
     fontSize: 12,
@@ -35,7 +35,7 @@ export function FittedName({ text, font, blockSize }: FittedNameProps) {
           width,
           height,
           (fontSize, value) => measureNameWithCanvas(font, fontSize, value),
-          getNameSizeScale(blockSize)
+          getNameSizeScale(fontSizePercent)
         )
       );
     };
@@ -46,7 +46,7 @@ export function FittedName({ text, font, blockSize }: FittedNameProps) {
     void ensureNameFontsLoaded().then(fit);
 
     return () => observer.disconnect();
-  }, [text, font, blockSize]);
+  }, [text, font, fontSizePercent]);
 
   return (
     <div ref={boxRef} className="fitted-name">

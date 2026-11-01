@@ -1,4 +1,5 @@
-import type { FontOption, DndStatsSettings } from '../types';
+import type { NameFontValue, DndStatsSettings } from '../types';
+import { getNameCssOverride, isLocalNameFont } from '../utils/nameFont';
 import {
   ABILITY_KEYS,
   ABILITY_SHEET_LABELS,
@@ -12,7 +13,7 @@ import './DndStatsPanel.css';
 interface DndStatsPanelProps {
   stats: DndStatsSettings;
   name: string;
-  font: FontOption;
+  font: NameFontValue;
 }
 
 function CombatIconStat({
@@ -47,7 +48,10 @@ export function DndStatsPanel({ stats, name, font }: DndStatsPanelProps) {
       <header className="sheet-header">
         <div className="sheet-name-box">
           <span className="sheet-field-label">Имя персонажа</span>
-          <span className={`sheet-name-value name-font-${font}`}>
+          <span
+            className={`sheet-name-value ${isLocalNameFont(font) ? '' : `name-font-${font}`}`}
+            style={getNameCssOverride(font)}
+          >
             <span className="name-text">{trimmedName}</span>
           </span>
         </div>

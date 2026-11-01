@@ -1,5 +1,5 @@
-import type { FontOption, DndStatsSettings } from '../types';
-import { getCanvasFont } from './nameLabelRender';
+import type { NameFontValue, DndStatsSettings } from '../types';
+import { getCanvasFont } from './nameFont';
 import {
   ABILITY_KEYS,
   ABILITY_SHEET_LABELS,
@@ -91,7 +91,7 @@ const drawCenteredText = (
 const drawFittedName = (
   ctx: CanvasRenderingContext2D,
   text: string,
-  font: FontOption,
+  font: NameFontValue,
   x: number,
   y: number,
   w: number,
@@ -216,7 +216,7 @@ export const drawDndStatsPanel = (
   height: number,
   stats: DndStatsSettings,
   name: string,
-  font: FontOption
+  font: NameFontValue
 ): void => {
   ctx.fillStyle = PAPER;
   ctx.fillRect(0, 0, width, height);

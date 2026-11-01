@@ -1,39 +1,20 @@
-import type { BlockSizeOption, FontOption } from '../types';
+import type { NameFontValue } from '../types';
+import {
+  MAX_NAME_FONT_SIZE_PERCENT,
+  MIN_NAME_FONT_SIZE_PERCENT,
+} from '../types';
+import { getCanvasFont, getNameLetterSpacingEm } from './nameFont';
 
 export const NAME_LINE_HEIGHT = 1.1;
 export const NAME_MAX_LINES = 2;
 
-export const getCanvasFont = (font: FontOption, sizePx: number): string => {
-  switch (font) {
-    case 'medieval':
-      return `700 ${sizePx}px "Old Standard TT", "Times New Roman", serif`;
-    case 'elegant':
-      return `italic ${sizePx}px Georgia, serif`;
-    case 'fantasy':
-      return `${sizePx}px "Times New Roman", Times, serif`;
-    case 'royal':
-      return `${sizePx}px Arial, Helvetica, sans-serif`;
-    case 'script':
-      return `${sizePx}px Verdana, Geneva, sans-serif`;
-    case 'ancient':
-      return `${sizePx}px "Trebuchet MS", Trebuchet, sans-serif`;
-    case 'inscription':
-      return `${sizePx}px Palatino, "Palatino Linotype", "Book Antiqua", serif`;
-    case 'bold':
-      return `bold ${sizePx}px "Courier New", Courier, monospace`;
-    default:
-      return `700 ${sizePx}px "Old Standard TT", "Times New Roman", serif`;
-  }
-};
+export const clampNameFontSizePercent = (percent: number): number =>
+  Number.isFinite(percent)
+    ? Math.min(MAX_NAME_FONT_SIZE_PERCENT, Math.max(MIN_NAME_FONT_SIZE_PERCENT, percent))
+    : MIN_NAME_FONT_SIZE_PERCENT;
 
-export const getNameLetterSpacingEm = (font: FontOption): number =>
-  font === 'medieval' ? 0.04 : 0;
-
-export const getNameSizeScale = (blockSize: BlockSizeOption): number => {
-  if (blockSize === 'small') return 0.72;
-  if (blockSize === 'medium') return 0.86;
-  return 1;
-};
+export const getNameSizeScale = (fontSizePercent: number): number =>
+  clampNameFontSizePercent(fontSizePercent) / 100;
 
 export const ensureNameFontsLoaded = async (): Promise<void> => {
   if (typeof document === 'undefined' || !document.fonts) return;
@@ -48,7 +29,7 @@ export const ensureNameFontsLoaded = async (): Promise<void> => {
 export const measureNameWidth = (
   text: string,
   fontSize: number,
-  font: FontOption,
+  font: NameFontValue,
   measureGlyphs: (s: string) => number
 ): number => {
   const spacing = getNameLetterSpacingEm(font) * fontSize * Math.max(0, text.length - 1);
@@ -156,7 +137,7 @@ export const layoutFittedName = (
 let measureCtx: CanvasRenderingContext2D | null = null;
 
 export const measureNameWithCanvas = (
-  font: FontOption,
+  font: NameFontValue,
   fontSize: number,
   text: string
 ): number => {
@@ -175,7 +156,7 @@ export const measureNameWithCanvas = (
 export const drawFittedName = (
   ctx: CanvasRenderingContext2D,
   text: string,
-  font: FontOption,
+  font: NameFontValue,
   x: number,
   y: number,
   w: number,

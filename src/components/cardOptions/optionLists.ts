@@ -1,5 +1,6 @@
-import { CARD_SIDE_LABELS, type BlockSizeOption, type CardSide, type FontOption, type ImageFillMode, type NameDisplaySide, type PawnSize } from '../../types';
+import { CARD_SIDE_LABELS, type CardSide, type FontOption, type ImageFillMode, type NameDisplaySide, type NameFontValue, type PawnSize } from '../../types';
 import { PRESET_OVERLAYS } from '../../utils/presetOverlays';
+import { makeLocalNameFont, SYSTEM_FONT_STACKS, type NameFontChoice } from '../../utils/nameFont';
 
 export const FONT_OPTIONS: { value: FontOption; label: string }[] = [
   { value: 'medieval', label: 'Old Standard TT' },
@@ -12,11 +13,27 @@ export const FONT_OPTIONS: { value: FontOption; label: string }[] = [
   { value: 'bold', label: 'Courier New' },
 ];
 
-export const BLOCK_SIZE_OPTIONS: { value: BlockSizeOption; label: string }[] = [
-  { value: 'small', label: 'S' },
-  { value: 'medium', label: 'M' },
-  { value: 'large', label: 'L' },
-];
+export const BUILTIN_FONT_CHOICES: NameFontChoice[] = FONT_OPTIONS.map((option) => ({
+  value: option.value as NameFontValue,
+  label: option.label,
+}));
+
+const BUILTIN_LABELS: ReadonlySet<string> = new Set(
+  FONT_OPTIONS.map((option) => option.label.toLowerCase())
+);
+
+/**
+ * Always-available wide list of common system fonts. Shown in the picker next
+ * to the built-in presets and used as a fallback where Local Font Access is
+ * unsupported (Firefox, Safari). Families already covered by the presets are
+ * not repeated here.
+ */
+export const SYSTEM_FONT_CHOICES: NameFontChoice[] = SYSTEM_FONT_STACKS.filter(
+  (entry) => !BUILTIN_LABELS.has(entry.family.toLowerCase())
+).map((entry) => ({
+  value: makeLocalNameFont(entry.family),
+  label: entry.family,
+}));
 
 export const DISPLAY_SIDE_OPTIONS: { value: NameDisplaySide; label: string }[] = [
   { value: 'a', label: CARD_SIDE_LABELS.a },

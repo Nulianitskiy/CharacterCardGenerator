@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  clampNameFontSizePercent,
   getNameSizeScale,
   layoutFittedName,
   wrapNameText,
@@ -45,10 +46,25 @@ describe('layoutFittedName', () => {
   });
 });
 
+describe('clampNameFontSizePercent', () => {
+  it('keeps values inside the allowed range', () => {
+    expect(clampNameFontSizePercent(100)).toBe(100);
+    expect(clampNameFontSizePercent(72)).toBe(72);
+    expect(clampNameFontSizePercent(1)).toBe(25);
+    expect(clampNameFontSizePercent(9999)).toBe(300);
+  });
+
+  it('falls back to the minimum for non-finite values', () => {
+    expect(clampNameFontSizePercent(Number.NaN)).toBe(25);
+    expect(clampNameFontSizePercent(Number.POSITIVE_INFINITY)).toBe(25);
+  });
+});
+
 describe('getNameSizeScale', () => {
-  it('maps block sizes to the PDF scale', () => {
-    expect(getNameSizeScale('small')).toBe(0.72);
-    expect(getNameSizeScale('medium')).toBe(0.86);
-    expect(getNameSizeScale('large')).toBe(1);
+  it('maps percents to the fit scale used by both renderers', () => {
+    expect(getNameSizeScale(100)).toBe(1);
+    expect(getNameSizeScale(86)).toBeCloseTo(0.86);
+    expect(getNameSizeScale(50)).toBeCloseTo(0.5);
+    expect(getNameSizeScale(500)).toBeCloseTo(3);
   });
 });
