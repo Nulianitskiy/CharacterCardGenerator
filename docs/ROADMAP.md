@@ -11,6 +11,10 @@ MiniFold initiative cards, dm.tools tracker.
 
 ### Высокая ценность
 
+- 🚧 **«Объекты» — физические карточки предметов.** Новая сущность: рубашка
+  (имя + изображение + слоган на свитке + бейдж количества) и сторона описания
+  (justified-текст в рамке), напечатанные парами на одном A4. План:
+  `docs/objects-feature-plan.md`.
 - ⬜ **Импорт существ из SRD 5e.** Открытые данные без ключей: dnd5eapi.co, Open5e API
   (~400 монстров в JSON). Кнопка «взять существо из бестиария» автозаполняет
   D&D-панель: имя, КД, хп, характеристики, модификаторы. Проект остаётся
@@ -104,6 +108,7 @@ MiniFold initiative cards, dm.tools tracker.
 | 3 | Сохранение проекта: JSON export/import → IndexedDB | ⬜ |
 | 4 | Reducer/store + фикс blob-утечек | ⬜ |
 | 5 | Импорт SRD-монстров (dnd5eapi.co / Open5e) | ⬜ |
+| 5b | Фича «Объекты» (карточки предметов) — план в docs/objects-feature-plan.md | 🚧 |
 | 6 | Единый spec D&D-панели + добрать константы в `constants.ts` | ⬜ |
 | 7 | Lazy-import jsPDF + React.memo + rect-cache для drag | ⬜ |
 | 8 | PWA (vite-plugin-pwa) | ⬜ |
