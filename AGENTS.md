@@ -4,9 +4,11 @@ Guidance for AI agents working in this repository.
 
 ## What this project is
 
-A client-only React SPA that generates printable **foldable initiative cards** and
-**tabletop pawns** for RPG game masters. Users upload portraits, tune per-card options,
-and export an A4 PDF that hangs on a GM screen (cards) or stands on the table (pawns).
+A client-only React SPA that generates printable **foldable initiative cards**,
+**tabletop pawns** and **object cards** (physical item cards: shirt + description
+pairs meant to be cut out and glued) for RPG game masters. Users upload portraits,
+tune per-card options, and export an A4 PDF that hangs on a GM screen (cards),
+stands on the table (pawns) or glues into two-sided item cards (objects).
 
 - No backend, no database, no API keys. Everything runs in the browser.
 - Deployed to GitHub Pages from `main` — see `.github/workflows/deploy.yml`.
@@ -72,6 +74,16 @@ not what they print.
   `FittedName.tsx`. PDF side: `src/utils/pdfGenerator.ts` with helpers
   (`nameLabelRender.ts`, `dndStatsRender.ts`, `imageFillLayout.ts`, `presetOverlays.ts`).
   **A feature that changes card appearance must be implemented on both sides.**
+- **A third sheet mode, `objects`**, is NOT a `CardsPerPageOption` — it is `sheetMode` in
+  `App.tsx` with its own entity (`GameObject` in `src/types.ts`) and its own PDF entry
+  (`generateObjectsPDF`). One object prints as a shirt face (name, image, slogan scroll,
+  optional quantity badge) next to its description face (justified text in a frame) on a
+  3×3 grid, `OBJECTS_PER_PAGE` per sheet. Geometry and zone fractions live in
+  `src/constants.ts` (`OBJECT_*`, `OBJECT_PALETTES`); pure placement and screen-percentage
+  layouts in `src/utils/objectLayout.ts`; text wrapping/fitting in
+  `src/utils/justifiedText.ts` (measure is injected, so it tests in Node); canvas
+  rasterization in `src/utils/objectPdfRender.ts`. Screen faces (`ObjectFaces.tsx`) and PDF
+  must read the same constants — the same rule as above applies to objects.
 
 ## Conventions
 
