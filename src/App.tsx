@@ -314,6 +314,15 @@ function App() {
     );
   }, []);
 
+  const handleReorderObjects = useCallback((orderedIds: string[]) => {
+    setObjects((prev) => {
+      const byId = new Map(prev.map((item) => [item.id, item]));
+      return orderedIds
+        .map((id) => byId.get(id))
+        .filter((item): item is GameObject => Boolean(item));
+    });
+  }, []);
+
   /** First file replaces the object image; remaining files are appended as new objects. */
   const handleReplaceObjectImage = useCallback((id: string, files: File[]) => {
     void ingestImageFilesAsObjects(files).then(({ items, errors }) => {
@@ -465,7 +474,11 @@ function App() {
         <header className="header">
           <h1 className="title">Генератор карточек инициативы</h1>
           <p className="subtitle">
-            Создавайте складывающиеся карточки инициативы для ширмы мастера
+            {objectMode
+              ? 'Создавайте двусторонние карточки предметов, трофеев и артефактов для печати на A4'
+              : pawnMode
+                ? 'Создавайте настольные фигурки-павны с подставкой трёх размеров для печати на A4'
+                : 'Создавайте складывающиеся карточки инициативы и листы персонажей для ширмы мастера'}
           </p>
         </header>
 
@@ -483,7 +496,14 @@ function App() {
                     setCardsPerPage(4);
                   }}
                 >
-                  Инициативки
+                  <span className="toggle-btn-top">
+                    <span>Инициативки</span>
+                    {cards.length > 0 && (
+                      <span className="toggle-count" aria-hidden="true">
+                        {cards.length}
+                      </span>
+                    )}
+                  </span>
                   <span className="toggle-hint">4 на лист</span>
                 </button>
                 <button
@@ -495,7 +515,14 @@ function App() {
                     setCardsPerPage(20);
                   }}
                 >
-                  Павны
+                  <span className="toggle-btn-top">
+                    <span>Павны</span>
+                    {cards.length > 0 && (
+                      <span className="toggle-count" aria-hidden="true">
+                        {cards.length}
+                      </span>
+                    )}
+                  </span>
                   <span className="toggle-hint">до {PAWNS_PER_PAGE} на лист</span>
                 </button>
                 <button
@@ -504,7 +531,14 @@ function App() {
                   aria-pressed={objectMode}
                   onClick={() => setSheetMode('objects')}
                 >
-                  Объекты
+                  <span className="toggle-btn-top">
+                    <span>Объекты</span>
+                    {objects.length > 0 && (
+                      <span className="toggle-count" aria-hidden="true">
+                        {objects.length}
+                      </span>
+                    )}
+                  </span>
                   <span className="toggle-hint">до {OBJECTS_PER_PAGE} на лист</span>
                 </button>
               </div>
@@ -568,9 +602,17 @@ function App() {
               </div>
             )}
             {ingestError && (
-              <p className="ingest-error" role="alert">
-                {ingestError}
-              </p>
+              <div className="ingest-error" role="alert">
+                <span>{ingestError}</span>
+                <button
+                  type="button"
+                  className="ingest-error-close"
+                  onClick={() => setIngestError(null)}
+                  aria-label="Скрыть уведомление"
+                >
+                  ×
+                </button>
+              </div>
             )}
             {objectMode ? (
               <ObjectGrid
@@ -580,6 +622,8 @@ function App() {
                 onAddObjects={handleAddObjects}
                 onSelectObject={handleSelectObject}
                 onRemoveObject={handleRemoveObject}
+                onReorderObjects={handleReorderObjects}
+                onReplaceObjectFiles={handleReplaceObjectImage}
               />
             ) : (
               <CardGrid

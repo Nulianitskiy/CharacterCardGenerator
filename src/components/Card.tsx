@@ -7,6 +7,7 @@ import './Card.css';
 
 interface CardProps {
   card: CharacterCard;
+  index: number;
   cardsPerPage: CardsPerPageOption;
   onRemove: (id: string) => void;
   onSelect: (id: string) => void;
@@ -41,6 +42,7 @@ const isFileDrag = (event: DragEvent): boolean =>
 
 export function Card({
   card,
+  index,
   cardsPerPage,
   onRemove,
   onSelect,
@@ -133,6 +135,9 @@ export function Card({
         aria-label={card.nameSettings.name.trim() || (isHugePawn ? 'Огромный павн' : 'Карточка персонажа')}
       >
         <CardSideFrame card={card} side="a" cardsPerPage={cardsPerPage} />
+        <span className="card-index" aria-hidden="true">
+          {index + 1}
+        </span>
         <button
           type="button"
           className="card-remove"

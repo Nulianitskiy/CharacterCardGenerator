@@ -60,29 +60,31 @@ export function CardOptionsActions({
         Заменить изображение
       </button>
 
-      <button
-        type="button"
-        className="option-btn"
-        onClick={() => onMoveUp(card.id)}
-        disabled={!canMoveUp}
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <polyline points="18,15 12,9 6,15" />
-        </svg>
-        Выше
-      </button>
+      <div className="options-actions-row">
+        <button
+          type="button"
+          className="option-btn"
+          onClick={() => onMoveUp(card.id)}
+          disabled={!canMoveUp}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="18,15 12,9 6,15" />
+          </svg>
+          Выше
+        </button>
 
-      <button
-        type="button"
-        className="option-btn"
-        onClick={() => onMoveDown(card.id)}
-        disabled={!canMoveDown}
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <polyline points="6,9 12,15 18,9" />
-        </svg>
-        Ниже
-      </button>
+        <button
+          type="button"
+          className="option-btn"
+          onClick={() => onMoveDown(card.id)}
+          disabled={!canMoveDown}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="6,9 12,15 18,9" />
+          </svg>
+          Ниже
+        </button>
+      </div>
 
       <button type="button" className="option-btn" onClick={() => onDuplicate(card.id)}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

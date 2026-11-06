@@ -1,5 +1,6 @@
 import type { NameFontValue, DndStatsSettings } from '../types';
 import { getCanvasFont } from './nameFont';
+import { measureNameWidth } from './nameLabelRender';
 import {
   ABILITY_KEYS,
   ABILITY_SHEET_LABELS,
@@ -105,7 +106,8 @@ const drawFittedName = (
   ctx.fillStyle = '#111';
   while (fontSize > minFontSize) {
     ctx.font = getCanvasFont(font, fontSize);
-    if (ctx.measureText(text).width <= w) break;
+    const measured = measureNameWidth(text, fontSize, font, (s) => ctx.measureText(s).width);
+    if (measured <= w) break;
     fontSize -= 1;
   }
   ctx.fillText(text, x, y + h / 2, w);
@@ -218,7 +220,17 @@ export const drawDndStatsPanel = (
   name: string,
   font: NameFontValue
 ): void => {
-  ctx.fillStyle = PAPER;
+  const bgGrad = ctx.createRadialGradient(
+    width * 0.5,
+    height * 0.08,
+    width * 0.05,
+    width * 0.5,
+    height * 0.5,
+    height * 0.85
+  );
+  bgGrad.addColorStop(0, '#faf6ec');
+  bgGrad.addColorStop(1, PAPER);
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, width, height);
 
   const m = Math.min(width, height) * 0.032;
@@ -227,6 +239,25 @@ export const drawDndStatsPanel = (
   ctx.strokeRect(m * 0.35, m * 0.35, width - m * 0.7, height - m * 0.7);
   ctx.lineWidth = m * 0.28;
   ctx.strokeRect(m * 0.85, m * 0.85, width - m * 1.7, height - m * 1.7);
+
+  // Corner diamonds between the outer and inner rules
+  const cornerOffset = m * 0.85;
+  const diamondR = m * 0.28;
+  ctx.fillStyle = INK;
+  for (const [cx, cy] of [
+    [cornerOffset, cornerOffset],
+    [width - cornerOffset, cornerOffset],
+    [width - cornerOffset, height - cornerOffset],
+    [cornerOffset, height - cornerOffset],
+  ]) {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - diamondR);
+    ctx.lineTo(cx + diamondR, cy);
+    ctx.lineTo(cx, cy + diamondR);
+    ctx.lineTo(cx - diamondR, cy);
+    ctx.closePath();
+    ctx.fill();
+  }
 
   const padX = width * 0.055;
   const padY = height * 0.035;

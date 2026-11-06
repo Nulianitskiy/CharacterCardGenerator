@@ -238,10 +238,11 @@ const drawFoldLine = (pdf: jsPDF, fold: SegmentMm) => {
 };
 
 const drawBaseTab = (pdf: jsPDF, base: RectMm, tabFold: SegmentMm) => {
+  pdf.setFillColor(247, 241, 228);
   pdf.setDrawColor(90, 80, 60);
   pdf.setLineWidth(PAWN_BASE_OUTLINE_WIDTH_MM);
   pdf.setLineDashPattern([], 0);
-  pdf.rect(base.x, base.y, base.width, base.height);
+  pdf.rect(base.x, base.y, base.width, base.height, 'FD');
   drawFoldLine(pdf, tabFold);
 };
 

@@ -11,6 +11,7 @@ import {
   clampPassive,
   clampSpellSaveDc,
   cloneDndStats,
+  createDefaultDndStats,
   formatSigned,
   withUpdatedAbility,
 } from '../../utils/dndStats';
@@ -259,6 +260,19 @@ export function CardOptionsDndSection({
                 );
               })}
             </div>
+            <button
+              type="button"
+              className="stat-reset"
+              onClick={() =>
+                updateDndStats({
+                  ...createDefaultDndStats(),
+                  enabled: true,
+                  displaySide: dndStats.displaySide,
+                })
+              }
+            >
+              Сбросить показатели
+            </button>
           </div>
         </div>
       )}

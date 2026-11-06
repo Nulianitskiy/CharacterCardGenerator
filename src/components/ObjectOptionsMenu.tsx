@@ -6,9 +6,10 @@ import {
   getGameObjectCellWidth,
 } from '../constants';
 import type { GameObject, ImageFillMode, ObjectTheme } from '../types';
-import { fitObjectPreviewTypography } from '../utils/objectLayout';
+import { fitObjectPreviewTypography, type ObjectFaceSide } from '../utils/objectLayout';
 import { IMAGE_FILL_OPTIONS, OBJECT_THEME_OPTIONS } from './cardOptions/optionLists';
 import { ObjectDescriptionFace, ObjectShirtFace } from './ObjectFaces';
+import { ObjectPreviewModal } from './SidePreviewModal';
 import './ObjectOptionsMenu.css';
 
 /** Face aspect for the live preview pair; kept identical to the sheet layout. */
@@ -58,6 +59,7 @@ export function ObjectOptionsMenu({
 }: ObjectOptionsMenuProps) {
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const [hasQuantity, setHasQuantity] = useState(object.quantity !== null);
+  const [previewSide, setPreviewSide] = useState<ObjectFaceSide | null>(null);
   const imageFillMode: ImageFillMode = object.imageFillMode ?? 'cover';
 
   const fitted = useMemo(
@@ -106,23 +108,70 @@ export function ObjectOptionsMenu({
         </button>
       </div>
 
-      <div className="object-preview">
-        <div
-          className="object-pair object-pair-preview"
-          style={{ aspectRatio: `${2 * FACE_ASPECT} / 1` }}
-        >
-          <div className="object-pair-face" style={{ aspectRatio: `${FACE_ASPECT}` }}>
-            <ObjectShirtFace
-              object={object}
-              pannable={imageFillMode === 'cover'}
-              onImageFocusChange={(imageFocus) => patch({ imageFocus })}
-            />
+      <div className="options-preview">
+        <div className="preview-sides">
+          <div
+            className={`preview-side${imageFillMode === 'cover' ? ' preview-side-pannable' : ''}`}
+            title={
+              imageFillMode === 'cover'
+                ? 'Перетащите превью, чтобы сдвинуть кадр (клик — увеличить)'
+                : 'Открыть в полном размере'
+            }
+            onClick={imageFillMode === 'cover' ? undefined : () => setPreviewSide('shirt')}
+          >
+            <button
+              type="button"
+              className="side-label-btn"
+              onClick={() => setPreviewSide('shirt')}
+              title="Открыть в полном размере"
+            >
+              <span className="side-label">Рубашка</span>
+            </button>
+            <div
+              className="object-side-container"
+              style={{ aspectRatio: `${FACE_ASPECT}` }}
+            >
+              <ObjectShirtFace
+                object={object}
+                pannable={imageFillMode === 'cover'}
+                onImageFocusChange={(imageFocus) => patch({ imageFocus })}
+                onImageClick={() => setPreviewSide('shirt')}
+              />
+            </div>
           </div>
-          <div className="object-pair-face" style={{ aspectRatio: `${FACE_ASPECT}` }}>
-            <ObjectDescriptionFace object={object} />
+
+          <div
+            className="preview-side"
+            role="button"
+            tabIndex={0}
+            title="Открыть в полном размере"
+            onClick={() => setPreviewSide('description')}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setPreviewSide('description');
+              }
+            }}
+          >
+            <span className="side-label">Описание</span>
+            <div
+              className="object-side-container"
+              style={{ aspectRatio: `${FACE_ASPECT}` }}
+            >
+              <ObjectDescriptionFace object={object} />
+            </div>
           </div>
         </div>
       </div>
+
+      {previewSide && (
+        <ObjectPreviewModal
+          object={object}
+          side={previewSide}
+          aspectRatio={FACE_ASPECT}
+          onClose={() => setPreviewSide(null)}
+        />
+      )}
 
       <div className="options-section">
         <div className="setting-row">
@@ -326,19 +375,21 @@ export function ObjectOptionsMenu({
           Заменить изображение
         </button>
 
-        <button type="button" className="option-btn" onClick={() => onMoveUp(object.id)} disabled={!canMoveUp}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="18,15 12,9 6,15" />
-          </svg>
-          Выше
-        </button>
+        <div className="options-actions-row">
+          <button type="button" className="option-btn" onClick={() => onMoveUp(object.id)} disabled={!canMoveUp}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="18,15 12,9 6,15" />
+            </svg>
+            Выше
+          </button>
 
-        <button type="button" className="option-btn" onClick={() => onMoveDown(object.id)} disabled={!canMoveDown}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="6,9 12,15 18,9" />
-          </svg>
-          Ниже
-        </button>
+          <button type="button" className="option-btn" onClick={() => onMoveDown(object.id)} disabled={!canMoveDown}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="6,9 12,15 18,9" />
+            </svg>
+            Ниже
+          </button>
+        </div>
 
         <button type="button" className="option-btn" onClick={() => onDuplicate(object.id)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

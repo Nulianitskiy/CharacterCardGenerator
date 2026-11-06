@@ -389,6 +389,12 @@
   gap: 0.5rem;
 }
 
+.options-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
 .option-btn {
   display: flex;
   align-items: center;

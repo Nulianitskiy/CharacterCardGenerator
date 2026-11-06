@@ -83,6 +83,7 @@ interface ObjectShirtFaceProps {
   object: GameObject;
   pannable?: boolean;
   onImageFocusChange?: (focus: ImageFocus) => void;
+  onImageClick?: () => void;
 }
 
 /** Shirt side: name band, unified paper window, image, ornate scroll, quantity medallion. */
@@ -90,6 +91,7 @@ export function ObjectShirtFace({
   object,
   pannable = false,
   onImageFocusChange,
+  onImageClick,
 }: ObjectShirtFaceProps) {
   const uid = useId();
   const palette = OBJECT_PALETTES[object.theme];
@@ -157,6 +159,7 @@ export function ObjectShirtFace({
           imageFocus={object.imageFocus}
           pannable={pannable}
           onImageFocusChange={onImageFocusChange}
+          onClick={onImageClick}
         />
       </div>
 

@@ -7,6 +7,7 @@ import {
 } from '../../types';
 import { clampNameFontSizePercent } from '../../utils/nameLabelRender';
 import { getNameCssOverride, isLocalNameFont } from '../../utils/nameFont';
+import { getPresetOverlay } from '../../utils/presetOverlays';
 import { DISPLAY_SIDE_OPTIONS, FULL_PRESETS, LOWER_PRESETS } from './optionLists';
 import { FontPicker } from './FontPicker';
 
@@ -73,7 +74,9 @@ export function CardOptionsNameSection({ card, onUpdateNameSettings }: CardOptio
           </div>
 
           <div className="setting-row">
-            <span className="setting-label">Фон</span>
+            <span className="setting-label">
+              Фон{getPresetOverlay(nameSettings.background) ? ` — ${getPresetOverlay(nameSettings.background)?.label}` : ''}
+            </span>
             <div className="background-options">
               <div className="bg-group">
                 <span className="bg-group-label">Полноразмерные рамки</span>

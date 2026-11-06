@@ -199,23 +199,35 @@ export function CardGrid({
     [onSelectCard]
   );
 
+  const pawn = isPawnLayout(cardsPerPage);
+  const uploadLabels = pawn
+    ? {
+        zoneAria: 'Загрузить изображения для павнов',
+        zoneText: 'Перетащите изображения существ или героев сюда или нажмите, чтобы выбрать',
+        addAria: 'Добавить павн',
+        addTitle: 'Добавить павн',
+      }
+    : undefined;
+
   if (cards.length === 0) {
-    return <ImageUpload variant="zone" onUploaded={onImagesUploaded} />;
+    return <ImageUpload variant="zone" onUploaded={onImagesUploaded} labels={uploadLabels} />;
   }
 
   const aspectRatio = getSheetSideAspect(cardsPerPage);
   const draggedCard = drag ? cards.find((card) => card.id === drag.id) : null;
   const others = drag ? cards.filter((card) => card.id !== drag.id) : cards;
-  const slots: Array<{ type: 'card'; card: CharacterCard } | { type: 'placeholder' }> = [];
+  const slots: Array<
+    { type: 'card'; card: CharacterCard; index: number } | { type: 'placeholder' }
+  > = [];
 
   if (drag) {
     others.forEach((card, index) => {
       if (index === drag.insertIndex) slots.push({ type: 'placeholder' });
-      slots.push({ type: 'card', card });
+      slots.push({ type: 'card', card, index });
     });
     if (drag.insertIndex >= others.length) slots.push({ type: 'placeholder' });
   } else {
-    cards.forEach((card) => slots.push({ type: 'card', card }));
+    cards.forEach((card, index) => slots.push({ type: 'card', card, index }));
   }
 
   return (
@@ -239,11 +251,12 @@ export function CardGrid({
           );
         }
 
-        const card = slot.card;
+        const { card, index } = slot;
         return (
           <Card
             key={card.id}
             card={card}
+            index={index}
             cardsPerPage={cardsPerPage}
             onRemove={onRemoveCard}
             onSelect={handleSelectCard}
@@ -257,6 +270,7 @@ export function CardGrid({
         variant="tile"
         aspectRatio={aspectRatio}
         onUploaded={onImagesUploaded}
+        labels={uploadLabels}
       />
       {drag && draggedCard && (
         <div

@@ -21,7 +21,7 @@ export interface UploadLabels {
 const DEFAULT_LABELS: UploadLabels = {
   zoneAria: 'Загрузить изображения персонажей',
   zoneText: 'Перетащите изображения персонажей сюда или нажмите, чтобы выбрать',
-  zoneHint: 'Поддерживаются JPG, PNG, WEBP и HEIC',
+  zoneHint: 'Поддерживаются JPG, PNG, WEBP, HEIC и вставка из буфера (Ctrl+V)',
   addAria: 'Добавить карточку',
   addTitle: 'Добавить карточку',
   addLabel: 'Добавить',
