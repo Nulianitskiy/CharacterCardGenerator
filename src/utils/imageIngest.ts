@@ -68,11 +68,22 @@ export const createObjectFromImageFile = (file: File): GameObject => ({
   description: '',
   quantity: null,
   theme: DEFAULT_OBJECT_THEME,
+  imageFillMode: 'cover',
+  imageFocus: { ...DEFAULT_IMAGE_FOCUS },
+  stat: '',
+  weight: '',
+  price: '',
+  attunement: false,
 });
 
 export const applyReplacedObjectImage = (object: GameObject, file: File): GameObject => {
   URL.revokeObjectURL(object.imageUrl);
-  return { ...object, file, imageUrl: URL.createObjectURL(file) };
+  return {
+    ...object,
+    file,
+    imageUrl: URL.createObjectURL(file),
+    imageFocus: { ...DEFAULT_IMAGE_FOCUS },
+  };
 };
 
 const convertHeicToJpeg = async (file: File): Promise<File> => {

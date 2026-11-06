@@ -27,6 +27,7 @@ import {
 import {
   objectCutSegments,
   objectFaceRect,
+  objectFoldSegments,
   objectPageCount,
   packObjectSheet,
 } from './objectLayout';
@@ -530,17 +531,20 @@ export const generateObjectsPDF = async (
   }
 
   const pageCount = objectPageCount(objects);
-  pdf.setDrawColor(255, 255, 255);
-  pdf.setLineWidth(CUT_LINE_WIDTH_MM);
-  pdf.setLineDashPattern([], 0);
   for (let page = 0; page < pageCount; page++) {
     pdf.setPage(page + 1);
     const objectsOnPage = Math.min(
       OBJECTS_PER_PAGE,
       objects.length - page * OBJECTS_PER_PAGE
     );
+    pdf.setDrawColor(255, 255, 255);
+    pdf.setLineWidth(CUT_LINE_WIDTH_MM);
+    pdf.setLineDashPattern([], 0);
     for (const segment of objectCutSegments(objectsOnPage)) {
       pdf.line(segment.x1, segment.y1, segment.x2, segment.y2);
+    }
+    for (const fold of objectFoldSegments(objectsOnPage)) {
+      drawFoldLine(pdf, fold);
     }
   }
 

@@ -1,12 +1,13 @@
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useMemo, useRef, useState, type ChangeEvent } from 'react';
 import {
   ACCEPTED_IMAGE_EXTENSIONS,
   OBJECT_PALETTES,
   getGameObjectCellHeight,
   getGameObjectCellWidth,
 } from '../constants';
-import type { GameObject, ObjectTheme } from '../types';
-import { OBJECT_THEME_OPTIONS } from './cardOptions/optionLists';
+import type { GameObject, ImageFillMode, ObjectTheme } from '../types';
+import { fitObjectPreviewTypography } from '../utils/objectLayout';
+import { IMAGE_FILL_OPTIONS, OBJECT_THEME_OPTIONS } from './cardOptions/optionLists';
 import { ObjectDescriptionFace, ObjectShirtFace } from './ObjectFaces';
 import './ObjectOptionsMenu.css';
 
@@ -14,7 +15,20 @@ import './ObjectOptionsMenu.css';
 const FACE_ASPECT = getGameObjectCellWidth() / getGameObjectCellHeight();
 
 export type ObjectPatch = Partial<
-  Pick<GameObject, 'name' | 'slogan' | 'description' | 'quantity' | 'theme'>
+  Pick<
+    GameObject,
+    | 'name'
+    | 'slogan'
+    | 'description'
+    | 'quantity'
+    | 'theme'
+    | 'imageFillMode'
+    | 'imageFocus'
+    | 'stat'
+    | 'weight'
+    | 'price'
+    | 'attunement'
+  >
 >;
 
 interface ObjectOptionsMenuProps {
@@ -44,6 +58,31 @@ export function ObjectOptionsMenu({
 }: ObjectOptionsMenuProps) {
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const [hasQuantity, setHasQuantity] = useState(object.quantity !== null);
+  const imageFillMode: ImageFillMode = object.imageFillMode ?? 'cover';
+
+  const fitted = useMemo(
+    () =>
+      fitObjectPreviewTypography({
+        name: object.name,
+        slogan: object.slogan,
+        description: object.description,
+        quantity: object.quantity,
+        stat: object.stat,
+        weight: object.weight,
+        price: object.price,
+        attunement: object.attunement,
+      }),
+    [
+      object.name,
+      object.slogan,
+      object.description,
+      object.quantity,
+      object.stat,
+      object.weight,
+      object.price,
+      object.attunement,
+    ]
+  );
 
   const patch = (values: ObjectPatch) => onUpdate(object.id, values);
 
@@ -73,11 +112,63 @@ export function ObjectOptionsMenu({
           style={{ aspectRatio: `${2 * FACE_ASPECT} / 1` }}
         >
           <div className="object-pair-face" style={{ aspectRatio: `${FACE_ASPECT}` }}>
-            <ObjectShirtFace object={object} />
+            <ObjectShirtFace
+              object={object}
+              pannable={imageFillMode === 'cover'}
+              onImageFocusChange={(imageFocus) => patch({ imageFocus })}
+            />
           </div>
           <div className="object-pair-face" style={{ aspectRatio: `${FACE_ASPECT}` }}>
             <ObjectDescriptionFace object={object} />
           </div>
+        </div>
+      </div>
+
+      <div className="options-section">
+        <div className="setting-row">
+          <span className="setting-label">Качество и рамка (BG3)</span>
+          <div className="rarity-grid">
+            {OBJECT_THEME_OPTIONS.map((option) => {
+              const pal = OBJECT_PALETTES[option.value];
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`theme-option ${object.theme === option.value ? 'active' : ''}`}
+                  onClick={() => patch({ theme: option.value as ObjectTheme })}
+                >
+                  <span
+                    className="theme-swatch"
+                    style={{
+                      background: `radial-gradient(circle at 35% 35%, ${pal.cardBgLight}, ${pal.cardBg})`,
+                      borderColor: pal.accent,
+                      boxShadow: `inset 0 0 0 1px ${pal.frame}`,
+                    }}
+                  />
+                  <span className="theme-option-label">{option.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="setting-row">
+          <span className="setting-label">Заполнение иллюстрации</span>
+          <div className="fill-mode-options">
+            {IMAGE_FILL_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={`fill-mode-option ${imageFillMode === option.value ? 'active' : ''}`}
+                onClick={() => patch({ imageFillMode: option.value })}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {imageFillMode === 'cover' && (
+            <p className="setting-hint">Перетащите рубашку в превью, чтобы сдвинуть кадр</p>
+          )}
         </div>
       </div>
 
@@ -98,7 +189,7 @@ export function ObjectOptionsMenu({
 
         <div className="setting-row">
           <label className="setting-label" htmlFor="object-slogan">
-            Слоган (рубашка)
+            Слоган (свиток на рубашке)
           </label>
           <textarea
             id="object-slogan"
@@ -117,15 +208,18 @@ export function ObjectOptionsMenu({
           <textarea
             id="object-description"
             className="setting-textarea setting-textarea-tall"
-            rows={8}
+            rows={7}
             value={object.description}
             onChange={(event) => patch({ description: event.target.value })}
-            placeholder="Текст, который напечатается в рамке. Длинный текст уменьшает кегль автоматически"
+            placeholder="Эффект или история предмета. Короткий текст дополняется виньеткой, длинный автоматически уменьшает кегль"
           />
+          {fitted.descriptionOverflow && (
+            <p className="setting-overflow-warning" role="status">
+              Текст превышает объём рамки — при печати конец описания будет обрезан.
+            </p>
+          )}
         </div>
-      </div>
 
-      <div className="options-section">
         <div className="setting-row">
           <label className="setting-label setting-checkbox-row">
             <input
@@ -154,28 +248,64 @@ export function ObjectOptionsMenu({
             />
           )}
         </div>
+      </div>
+
+      <div className="options-section">
+        <span className="setting-label">Характеристики предмета (BG3)</span>
 
         <div className="setting-row">
-          <span className="setting-label">Тема</span>
-          <div className="fill-mode-options">
-            {OBJECT_THEME_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={`theme-option ${object.theme === option.value ? 'active' : ''}`}
-                onClick={() => patch({ theme: option.value as ObjectTheme })}
-              >
-                <span
-                  className="theme-swatch"
-                  style={{
-                    background: OBJECT_PALETTES[option.value].cardBg,
-                    borderColor: OBJECT_PALETTES[option.value].accent,
-                  }}
-                />
-                {option.label}
-              </button>
-            ))}
+          <label className="setting-sublabel" htmlFor="object-stat">
+            Показатель (урон / КД / бонус)
+          </label>
+          <input
+            id="object-stat"
+            type="text"
+            className="setting-input"
+            value={object.stat ?? ''}
+            onChange={(event) => patch({ stat: event.target.value })}
+            placeholder="Например, 1к8 + 1 или КД 16"
+          />
+        </div>
+
+        <div className="object-stats-grid">
+          <div className="setting-row">
+            <label className="setting-sublabel" htmlFor="object-weight">
+              Вес
+            </label>
+            <input
+              id="object-weight"
+              type="text"
+              className="setting-input"
+              value={object.weight ?? ''}
+              onChange={(event) => patch({ weight: event.target.value })}
+              placeholder="1.5 фн."
+            />
           </div>
+
+          <div className="setting-row">
+            <label className="setting-sublabel" htmlFor="object-price">
+              Цена
+            </label>
+            <input
+              id="object-price"
+              type="text"
+              className="setting-input"
+              value={object.price ?? ''}
+              onChange={(event) => patch({ price: event.target.value })}
+              placeholder="150 зм"
+            />
+          </div>
+        </div>
+
+        <div className="setting-row">
+          <label className="setting-label setting-checkbox-row">
+            <input
+              type="checkbox"
+              checked={Boolean(object.attunement)}
+              onChange={(event) => patch({ attunement: event.target.checked })}
+            />
+            <span>Требует настройки</span>
+          </label>
         </div>
       </div>
 

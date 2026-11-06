@@ -3,20 +3,20 @@
 .object-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.15rem;
   justify-content: center;
-  padding: 0.25rem 0 0;
+  padding: 0.35rem 0 0;
 }
 
 .object-tile {
   position: relative;
   flex: 0 0 auto;
-  padding: 6px;
-  border-radius: 10px;
-  background: rgba(20, 17, 12, 0.55);
-  border: 2px solid transparent;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(20, 17, 12, 0.62);
+  border: 2px solid rgba(205, 173, 109, 0.16);
   box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 6px 20px rgba(0, 0, 0, 0.45),
     0 2px 6px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   user-select: none;
@@ -29,7 +29,7 @@
   transform: translateY(-4px);
   border-color: var(--gold);
   box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.5),
+    0 10px 26px rgba(0, 0, 0, 0.55),
     0 0 16px rgba(205, 173, 109, 0.25);
 }
 
@@ -37,14 +37,14 @@
   border-color: var(--gold);
   box-shadow:
     0 0 0 3px rgba(205, 173, 109, 0.4),
-    0 8px 24px rgba(0, 0, 0, 0.5);
+    0 10px 26px rgba(0, 0, 0, 0.55);
 }
 
 .object-pair {
   display: flex;
-  height: 150px;
+  height: 185px;
   width: auto;
-  gap: 4px;
+  gap: 6px;
 }
 
 .object-pair-face {
@@ -60,20 +60,20 @@
 
 /* Cut-line gap between the pair mirrors the sheet: shirt | description. */
 .object-pair-face + .object-pair-face {
-  box-shadow: -2px 0 0 rgba(255, 255, 255, 0.15);
+  box-shadow: -3px 0 0 rgba(255, 255, 255, 0.14);
 }
 
 .object-tile-index {
   position: absolute;
-  left: 8px;
-  top: 8px;
-  z-index: 5;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
-  border-radius: 10px;
-  background: rgba(20, 17, 12, 0.85);
-  border: 1px solid rgba(205, 173, 109, 0.45);
+  left: -6px;
+  top: -6px;
+  z-index: 6;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: rgba(20, 17, 12, 0.94);
+  border: 1px solid rgba(205, 173, 109, 0.6);
   color: var(--gold);
   font-family: var(--font-body);
   font-size: 0.72rem;
@@ -82,18 +82,19 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 .object-tile-remove {
   position: absolute;
-  right: 8px;
-  top: 8px;
+  right: -7px;
+  top: -7px;
   width: 24px;
   height: 24px;
   border-radius: 50%;
   background: var(--burgundy);
   color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.35);
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
@@ -103,6 +104,7 @@
   align-items: center;
   justify-content: center;
   z-index: 10;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 .object-tile:hover .object-tile-remove,
@@ -116,9 +118,9 @@
   transform: scale(1.1);
 }
 
-/* The add tile in the object grid should match the pair tile width. */
+/* The add tile in the object grid should match the pair tile height. */
 .object-grid .card-add {
-  height: 162px;
+  height: 201px;
 }
 
 @media (hover: none) {

@@ -120,13 +120,19 @@ export type PawnSize = 'medium' | 'large' | 'huge';
 export const DEFAULT_PAWN_SIZE: PawnSize = 'medium';
 
 /**
- * Color theme of a physical object card (shirt + description pair).
- * Palettes themselves live in `constants.ts` (`OBJECT_PALETTES`) and are read
- * by both renderers, so screen preview and print never drift apart.
+ * Quality / rarity tier of a physical object card (shirt + description pair),
+ * inspired by Baldur's Gate 3 item rarities. Palettes and frame patterns live
+ * in `constants.ts` (`OBJECT_PALETTES`) and are read by both renderers.
  */
-export type ObjectTheme = 'ruby' | 'emerald' | 'obsidian';
+export type ObjectTheme =
+  | 'common'
+  | 'uncommon'
+  | 'rare'
+  | 'very_rare'
+  | 'legendary'
+  | 'artifact';
 
-export const DEFAULT_OBJECT_THEME: ObjectTheme = 'ruby';
+export const DEFAULT_OBJECT_THEME: ObjectTheme = 'common';
 
 /**
  * One physical object card: glued pair of a «shirt» (image, name, slogan,
@@ -147,6 +153,18 @@ export interface GameObject {
   /** Optional «n штук» badge on the shirt; null hides it. */
   quantity: number | null;
   theme: ObjectTheme;
+  /** How to fit the item image inside the shirt window (default: cover). */
+  imageFillMode?: ImageFillMode;
+  /** Cover-crop focus; ignored for fitWidth / fitHeight. */
+  imageFocus?: ImageFocus;
+  /** Optional primary combat/item stat (e.g. «1к8 + 1», «КД 16», «2к4 + 2»). */
+  stat?: string;
+  /** Optional weight tag (e.g. «1.5 фн.»). */
+  weight?: string;
+  /** Optional gold/value tag (e.g. «150 зм»). */
+  price?: string;
+  /** Whether the item requires attunement («Требует настройки»). */
+  attunement?: boolean;
 }
 
 /**

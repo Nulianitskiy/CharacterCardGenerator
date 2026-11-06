@@ -277,7 +277,13 @@ function App() {
         return prev;
       }
       const next = [...prev];
-      next.splice(index + 1, 0, { ...source, id: generateId(), imageUrl });
+      next.splice(index + 1, 0, {
+        ...source,
+        id: generateId(),
+        imageUrl,
+        imageFillMode: source.imageFillMode ?? 'cover',
+        imageFocus: source.imageFocus ? { ...source.imageFocus } : { ...DEFAULT_IMAGE_FOCUS },
+      });
       return next;
     });
   }, []);
@@ -326,7 +332,12 @@ function App() {
         const next = replacement
           ? prev.map((object) =>
               object.id === id
-                ? { ...object, file: replacement.file, imageUrl: replacement.imageUrl }
+                ? {
+                    ...object,
+                    file: replacement.file,
+                    imageUrl: replacement.imageUrl,
+                    imageFocus: { ...DEFAULT_IMAGE_FOCUS },
+                  }
                 : object
             )
           : prev;
@@ -588,7 +599,7 @@ function App() {
         <footer className="footer">
           <p>
             {objectMode
-              ? `Карточки предметов • до ${OBJECTS_PER_PAGE} объектов на лист A4 • вырежьте пару «рубашка + описание» и склейте`
+              ? `Карточки предметов • до ${OBJECTS_PER_PAGE} объектов на лист A4 • вырежьте пару «рубашка + описание», сложите по сгибу и склейте`
               : pawnMode
                 ? `Складывающиеся павны • до ${PAWNS_PER_PAGE} средних на лист A4 • сложите по линии посередине и вырежьте подставку`
                 : 'Горизонтальные складывающиеся карточки • 4 карточки на лист A4 • сложите по вертикали и повесьте на ширму мастера'}

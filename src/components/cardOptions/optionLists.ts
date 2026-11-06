@@ -59,9 +59,12 @@ export const PAWN_SIZE_OPTIONS: { value: PawnSize; label: string }[] = [
 ];
 
 export const OBJECT_THEME_OPTIONS: { value: ObjectTheme; label: string }[] = [
-  { value: 'ruby', label: 'Рубин' },
-  { value: 'emerald', label: 'Изумруд' },
-  { value: 'obsidian', label: 'Обсидиан' },
+  { value: 'common', label: 'Обычное' },
+  { value: 'uncommon', label: 'Необычное' },
+  { value: 'rare', label: 'Редкое' },
+  { value: 'very_rare', label: 'Очень редкое' },
+  { value: 'legendary', label: 'Легендарное' },
+  { value: 'artifact', label: 'Сюжетное' },
 ];
 
 export const FULL_PRESETS = Object.values(PRESET_OVERLAYS).filter((preset) => preset.kind === 'full');

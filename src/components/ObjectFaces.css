@@ -1,7 +1,7 @@
 /* Object card face previews. Geometry percentages come from objectLayout,
-   matching the PDF zones. Colors are applied inline from OBJECT_PALETTES.
-   Font mirrors the built-in "medieval" print font (see nameFont.ts and
-   cardVisuals.css .name-font-medieval — keep all in sync). */
+   matching the PDF zones. Colors are applied inline from OBJECT_PALETTES,
+   and ornamental rarity borders/scrolls/watermarks come from objectFrames.ts
+   via the shared SVG overlay. */
 
 .object-face {
   position: relative;
@@ -18,58 +18,67 @@
   align-items: center;
   justify-content: center;
   text-align: center;
+  box-sizing: border-box;
+}
+
+.object-face-svg {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 3;
 }
 
 /* Shirt ------------------------------------------------------------------- */
 
+.object-shirt-name {
+  z-index: 4;
+  padding: 0 4%;
+  overflow: hidden;
+  pointer-events: none;
+  text-shadow: 0 0.2cqh 0.4cqh rgba(0, 0, 0, 0.65);
+}
+
 .object-shirt-name span {
-  line-height: 1.15;
+  line-height: 1.12;
   overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+.object-window-panel {
+  display: block;
+  border-radius: 5.5% / 4%;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .object-image-window {
   display: block;
-  border-radius: 8%;
+  border-radius: 5.5% / 4%;
   overflow: hidden;
+  padding: 2%;
+  z-index: 2;
 }
 
-.object-image-window img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.object-image-window .filled-image-wrap {
+  border-radius: 3.5% / 2.8%;
 }
 
-.object-shirt-scroll {
-  border-radius: 4% / 12%;
-  padding: 0 12%;
-  overflow: visible;
+.object-image-window .filled-image-wrap-letterbox {
+  background: transparent;
 }
 
-/* Rolled ends: circles centered on the strip's side edges, like the PDF. */
-.object-shirt-scroll::before,
-.object-shirt-scroll::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  height: 84%;
-  aspect-ratio: 1 / 1;
-  transform: translateY(-50%);
-  border-radius: 50%;
-  background: var(--roller-color, currentColor);
-  z-index: -1;
+.object-shirt-scroll-text {
+  z-index: 4;
+  overflow: hidden;
+  pointer-events: none;
 }
 
-.object-shirt-scroll::before {
-  left: -11%;
-}
-
-.object-shirt-scroll::after {
-  right: -11%;
-}
-
-.object-shirt-scroll span {
-  line-height: 1.15;
+.object-shirt-scroll-text span {
+  line-height: 1.14;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .object-shirt-badge {
@@ -81,6 +90,11 @@
   align-items: center;
   justify-content: center;
   height: auto;
+  z-index: 5;
+  pointer-events: none;
+  box-shadow:
+    0 0.25cqh 0.6cqh rgba(0, 0, 0, 0.35),
+    inset 0 0 0 0.22cqh var(--badge-inner-ring, #fff);
 }
 
 .object-shirt-badge span {
@@ -90,31 +104,43 @@
 /* Description -------------------------------------------------------------- */
 
 .object-desc-name {
-  border-radius: 12% / 8%;
+  border-radius: 6% / 14%;
+  padding: 0 5.5%;
+  overflow: hidden;
+  z-index: 1;
 }
 
 .object-desc-name span {
-  line-height: 1.1;
+  line-height: 1.12;
   overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .object-desc-label {
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
+  padding: 0 18%;
+  overflow: hidden;
+  z-index: 4;
+  text-shadow: 0 0.2cqh 0.4cqh rgba(0, 0, 0, 0.65);
+}
+
+.object-desc-label span {
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .object-desc-frame {
-  border-style: solid;
-  border-width: 0.6cqh;
-  border-radius: 6% / 4%;
+  border-radius: 4.5% / 3.5%;
   display: block;
+  z-index: 1;
 }
 
 .object-desc-text {
-  position: absolute;
   overflow: hidden;
   align-items: flex-start;
   justify-content: flex-start;
   text-align: justify;
+  z-index: 4;
 }
 
 .object-desc-text span {
@@ -124,4 +150,21 @@
   overflow-wrap: break-word;
   display: block;
   width: 100%;
+}
+
+.object-desc-stat-text {
+  overflow: hidden;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.object-desc-stat-text span {
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }

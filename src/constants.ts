@@ -165,14 +165,18 @@ export const POINTER_DRAG_THRESHOLD_PX = 6;
 
 // --- Object cards (physical item cards: shirt + description pairs) ---------
 
-/** Sheet grid for object faces. */
-export const OBJECT_COLUMNS = 3;
-export const OBJECT_ROWS = 3;
+/**
+ * Sheet grid for object faces: 4 columns × 4 rows (2 pairs per row × 4 rows).
+ * Every object pair (shirt + description) sits side-by-side in the same row,
+ * leaving zero empty cells on a full sheet (8 objects = 16 cells).
+ */
+export const OBJECT_COLUMNS = 4;
+export const OBJECT_ROWS = 4;
 
 /** Faces printed per object: shirt first, then its description (row-major cells). */
 export const OBJECT_FACES_PER_OBJECT = 2;
 
-/** Whole objects that fit on one sheet (the odd 9th cell stays empty). */
+/** Whole objects that fit on one sheet (8 pairs = 16 cells, 0 wasted cells). */
 export const OBJECTS_PER_PAGE = Math.floor(
   (OBJECT_COLUMNS * OBJECT_ROWS) / OBJECT_FACES_PER_OBJECT
 );
@@ -189,25 +193,29 @@ export const OBJECT_SHIRT_NAME_FRACTION = 0.12;
 export const OBJECT_SHIRT_SCROLL_FRACTION = 0.16;
 export const OBJECT_SHIRT_GAP_FRACTION = 0.015;
 export const OBJECT_SHIRT_SIDE_INSET_FRACTION = 0.06;
-export const OBJECT_SHIRT_SCROLL_SIDE_INSET_FRACTION = 0.09;
+export const OBJECT_SHIRT_SCROLL_SIDE_INSET_FRACTION = 0.085;
 /** Badge diameter and its inset from the face's top-right corner, of cell width. */
-export const OBJECT_BADGE_DIAMETER_FRACTION = 0.18;
-export const OBJECT_BADGE_INSET_FRACTION = 0.045;
+export const OBJECT_BADGE_DIAMETER_FRACTION = 0.17;
+export const OBJECT_BADGE_INSET_FRACTION = 0.085;
 
 // Description zones. Name plate and framed text box are paper on the card bg;
-// «Описание» label sits on the background between them.
+// rarity subtitle + divider sit on the background between them.
 export const OBJECT_DESC_NAME_FRACTION = 0.125;
-export const OBJECT_DESC_LABEL_FRACTION = 0.045;
+export const OBJECT_DESC_LABEL_FRACTION = 0.048;
 export const OBJECT_DESC_SIDE_INSET_FRACTION = 0.06;
 /** Gap between the frame's outer edge and the text it contains. */
-export const OBJECT_DESC_TEXT_PADDING_FRACTION = 0.05;
+export const OBJECT_DESC_TEXT_PADDING_FRACTION = 0.045;
+/** Height of the optional BG3 stats footer bar inside the description frame (1 vs 2 rows). */
+export const OBJECT_DESC_STATS_SINGLE_ROW_FRACTION = 0.078;
+export const OBJECT_DESC_STATS_DOUBLE_ROW_FRACTION = 0.138;
 
-// Print type sizes in millimeters (screen scales from the same ratios).
-export const OBJECT_NAME_FONT_MM = 4.3;
-export const OBJECT_TEXT_FONT_MM = 3.1;
-export const OBJECT_SLOGAN_FONT_MM = 2.7;
-export const OBJECT_LABEL_FONT_MM = 2.3;
-export const OBJECT_BADGE_FONT_MM = 3.6;
+// Print type sizes in millimeters for the 50 × 71.75 mm cell (screen scales from the same ratios).
+export const OBJECT_NAME_FONT_MM = 3.25;
+export const OBJECT_TEXT_FONT_MM = 2.35;
+export const OBJECT_SLOGAN_FONT_MM = 2.05;
+export const OBJECT_LABEL_FONT_MM = 1.68;
+export const OBJECT_BADGE_FONT_MM = 2.65;
+export const OBJECT_STAT_FONT_MM = 1.75;
 
 /** Leading for wrapped object text (× font size). */
 export const OBJECT_LINE_HEIGHT_FACTOR = 1.3;
@@ -215,48 +223,122 @@ export const OBJECT_LINE_HEIGHT_FACTOR = 1.3;
 export const OBJECT_MIN_FONT_FRACTION = 0.55;
 
 /**
- * Object card palettes — the single source of truth for object colors.
- * The screen reads these into CSS custom properties; the PDF strokes/fills
- * the same values.
+ * Ornamental frame geometry pattern tied to item quality / rarity.
+ */
+export type ObjectFramePattern =
+  | 'forged'
+  | 'botanic'
+  | 'arcane'
+  | 'gothic'
+  | 'royal'
+  | 'relic';
+
+/**
+ * Object card palettes & frame patterns — the single source of truth for object
+ * appearance. Inspired by Baldur's Gate 3 item rarity tiers.
  */
 export interface ObjectPalette {
-  /** Card background (shirt name band, description label sit on it). */
+  /** Short Russian rarity name for the UI picker. */
+  label: string;
+  /** Subtitle printed on the description divider band. */
+  raritySubtitle: string;
+  /** Vector frame pattern rendered on both faces. */
+  pattern: ObjectFramePattern;
+  /** Card background (deep edge tone). */
   cardBg: string;
+  /** Lighter card background (top/center gradient sheen). */
+  cardBgLight: string;
   /** Paper fill: image window, name plate, description frame, scroll body. */
   paper: string;
+  /** Darker shaded parchment for scroll curls, watermarks and inner rules. */
+  paperDark: string;
   /** Text drawn on `paper`. */
   ink: string;
-  /** Text drawn on `cardBg` (shirt name, «Описание»). */
+  /** Text drawn on `cardBg` (shirt name, rarity subtitle). */
   onCardBg: string;
-  /** Quantity badge circle and scroll rollers. */
+  /** Rarity metallic/magical accent: outer filigree, badge, scroll rollers, divider. */
   accent: string;
-  /** Border of the description text frame. */
+  /** Border of the paper panels and badge rim. */
   frame: string;
 }
 
 export const OBJECT_PALETTES: Record<ObjectTheme, ObjectPalette> = {
-  ruby: {
-    cardBg: '#8f1212',
-    paper: '#f7ecd2',
-    ink: '#1f1f1f',
-    onCardBg: '#fff5e6',
-    accent: '#f2b13c',
-    frame: '#5d0a0a',
+  common: {
+    label: 'Обычное',
+    raritySubtitle: 'Обычный предмет',
+    pattern: 'forged',
+    cardBg: '#272421',
+    cardBgLight: '#3a3530',
+    paper: '#f3ede0',
+    paperDark: '#dfd4be',
+    ink: '#1f1c18',
+    onCardBg: '#ede7dc',
+    accent: '#b5a48b',
+    frame: '#595045',
   },
-  emerald: {
-    cardBg: '#0e4d2b',
-    paper: '#f4f1e4',
-    ink: '#1a1a1a',
-    onCardBg: '#eafaea',
-    accent: '#57b06b',
-    frame: '#08341b',
+  uncommon: {
+    label: 'Необычное',
+    raritySubtitle: 'Необычный предмет',
+    pattern: 'botanic',
+    cardBg: '#0d3b22',
+    cardBgLight: '#175935',
+    paper: '#f2f4e6',
+    paperDark: '#d9e0c5',
+    ink: '#142118',
+    onCardBg: '#e8faee',
+    accent: '#54c97b',
+    frame: '#1b5e39',
   },
-  obsidian: {
-    cardBg: '#1c1e24',
-    paper: '#e9e9ef',
-    ink: '#15161a',
-    onCardBg: '#e3e5ee',
-    accent: '#8d96a8',
-    frame: '#000000',
+  rare: {
+    label: 'Редкое',
+    raritySubtitle: 'Редкий предмет',
+    pattern: 'arcane',
+    cardBg: '#0f294d',
+    cardBgLight: '#1b437a',
+    paper: '#edf2f8',
+    paperDark: '#d2dfee',
+    ink: '#101c2e',
+    onCardBg: '#e6f3ff',
+    accent: '#5eb5ff',
+    frame: '#1f5694',
+  },
+  very_rare: {
+    label: 'Очень редкое',
+    raritySubtitle: 'Очень редкий предмет',
+    pattern: 'gothic',
+    cardBg: '#3c1033',
+    cardBgLight: '#5e1b50',
+    paper: '#f6eef5',
+    paperDark: '#e4d1e2',
+    ink: '#210d1e',
+    onCardBg: '#fce8fa',
+    accent: '#d875ff',
+    frame: '#78266b',
+  },
+  legendary: {
+    label: 'Легендарное',
+    raritySubtitle: 'Легендарный предмет',
+    pattern: 'royal',
+    cardBg: '#4a2206',
+    cardBgLight: '#73380e',
+    paper: '#fbf2da',
+    paperDark: '#ead6a2',
+    ink: '#261304',
+    onCardBg: '#fff5d6',
+    accent: '#f7c148',
+    frame: '#9e6814',
+  },
+  artifact: {
+    label: 'Сюжетное',
+    raritySubtitle: 'Сюжетный предмет',
+    pattern: 'relic',
+    cardBg: '#731111',
+    cardBgLight: '#9e1b1b',
+    paper: '#f8ecd2',
+    paperDark: '#e6cfa3',
+    ink: '#220f0d',
+    onCardBg: '#fff2e2',
+    accent: '#f5933d',
+    frame: '#8f3114',
   },
 };

@@ -113,7 +113,9 @@ describe('object image helpers', () => {
     expect(object.slogan).toBe('');
     expect(object.description).toBe('');
     expect(object.quantity).toBeNull();
-    expect(object.theme).toBe('ruby');
+    expect(object.theme).toBe('common');
+    expect(object.imageFillMode).toBe('cover');
+    expect(object.imageFocus).toEqual(DEFAULT_IMAGE_FOCUS);
   });
 
   it('ingests files into objects, reporting rejected types', async () => {
