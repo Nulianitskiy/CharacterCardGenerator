@@ -157,11 +157,12 @@ const renderCardHalfToDataUrl = async (
 
   const outputCanvas = rotatePortraitToHalf(portraitCanvas, widthPx, heightPx, isSideB);
 
-  const usePng = Boolean(shouldShowName && nameSettings);
-  if (usePng) {
-    return { dataUrl: outputCanvas.toDataURL('image/png'), format: 'PNG' };
-  }
-  return { dataUrl: outputCanvas.toDataURL('image/jpeg', 0.94), format: 'JPEG' };
+  // Halves are opaque except a sub-pixel edge sliver, so PNG only added bytes:
+  // jsPDF kept its alpha as a full-size SMask and (without the compress option)
+  // stored every channel uncompressed. Name-bearing halves use a slightly higher
+  // JPEG quality to keep fitted text crisp at print dpi.
+  const jpegQuality = shouldShowName && nameSettings ? 0.95 : 0.94;
+  return { dataUrl: outputCanvas.toDataURL('image/jpeg', jpegQuality), format: 'JPEG' };
 };
 
 const renderUprightHalfToDataUrl = (
@@ -331,6 +332,9 @@ export const generatePDF = async (
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
+    // Enables FlateEncode: PNG halves (DnD stats panels) get Paeth/level-9 re-compression
+    // and page content streams are compressed. JPEG halves are embedded as-is (DCTDecode).
+    compress: true,
   });
 
   const pawn = isPawnLayout(cardsPerPage);
