@@ -1,9 +1,10 @@
 import jsPDF from 'jspdf';
-import type { CharacterCard, ImageFillMode, ImageFocus, NameSettings, CardSide } from '../types';
+import type { CharacterCard, GameObject, ImageFillMode, ImageFocus, NameSettings, CardSide } from '../types';
 import {
   CUT_LINE_WIDTH_MM,
   FOLD_LINE_WIDTH_MM,
   FOLD_LINE_DASH_MM,
+  OBJECTS_PER_PAGE,
   PAWN_BASE_OUTLINE_WIDTH_MM,
   PRINT_PX_PER_MM,
   getHalfWidth,
@@ -23,6 +24,17 @@ import {
   type RectMm,
   type SegmentMm,
 } from './pdfLayout';
+import {
+  objectCutSegments,
+  objectFaceRect,
+  objectPageCount,
+  packObjectSheet,
+} from './objectLayout';
+import {
+  objectShirtImagePrintSizePx,
+  renderDescriptionFace,
+  renderShirtFace,
+} from './objectPdfRender';
 import { ensureNameFontsLoaded, drawFittedName, getNameSizeScale } from './nameLabelRender';
 import { getPresetOverlay } from './presetOverlays';
 import { layoutImageFill } from './imageFillLayout';
@@ -441,6 +453,99 @@ export const generatePDF = async (
   const filename = pawn
     ? `pawns-${timestamp}.pdf`
     : `initiative-cards-${timestamp}.pdf`;
+  pdf.setProperties({ title: filename });
+  const blob = pdf.output('blob');
+  const url = URL.createObjectURL(blob);
+
+  return { url, filename, blob };
+};
+
+/**
+ * Object-card sheet: each GameObject prints as a shirt face followed by its
+ * description face in adjacent grid cells (see `packObjectSheet`), with white
+ * cut guides and no fold marks — pairs are meant to be cut out and glued.
+ */
+export const generateObjectsPDF = async (
+  objects: GameObject[],
+  onProgress?: (completed: number, total: number) => void
+): Promise<{ url: string; filename: string; blob: Blob }> => {
+  if (objects.length === 0) {
+    throw new Error('No objects to generate');
+  }
+
+  await ensureNameFontsLoaded();
+
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4',
+    compress: true,
+  });
+
+  const placements = packObjectSheet(objects);
+  const imagePrintSize = objectShirtImagePrintSizePx();
+
+  let currentPage = -1;
+  let completed = 0;
+
+  for (let i = 0; i < objects.length; i++) {
+    const object = objects[i];
+    const shirtPlacement = placements[i * 2];
+    const descriptionPlacement = placements[i * 2 + 1];
+
+    if (shirtPlacement.page !== currentPage) {
+      if (currentPage >= 0) pdf.addPage();
+      currentPage = shirtPlacement.page;
+    }
+
+    const printImage = await loadPrintImage(
+      object.imageUrl,
+      imagePrintSize.width,
+      imagePrintSize.height
+    );
+
+    try {
+      const shirt = renderShirtFace(object, printImage);
+      const description = renderDescriptionFace(object);
+
+      const shirtRect = objectFaceRect(shirtPlacement.col, shirtPlacement.row);
+      const descriptionRect = objectFaceRect(
+        descriptionPlacement.col,
+        descriptionPlacement.row
+      );
+      pdf.addImage(shirt, 'JPEG', shirtRect.x, shirtRect.y, shirtRect.width, shirtRect.height);
+      pdf.addImage(
+        description,
+        'JPEG',
+        descriptionRect.x,
+        descriptionRect.y,
+        descriptionRect.width,
+        descriptionRect.height
+      );
+    } finally {
+      closePrintImage(printImage);
+    }
+
+    onProgress?.(++completed, objects.length);
+  }
+
+  const pageCount = objectPageCount(objects);
+  pdf.setDrawColor(255, 255, 255);
+  pdf.setLineWidth(CUT_LINE_WIDTH_MM);
+  pdf.setLineDashPattern([], 0);
+  for (let page = 0; page < pageCount; page++) {
+    pdf.setPage(page + 1);
+    const objectsOnPage = Math.min(
+      OBJECTS_PER_PAGE,
+      objects.length - page * OBJECTS_PER_PAGE
+    );
+    for (const segment of objectCutSegments(objectsOnPage)) {
+      pdf.line(segment.x1, segment.y1, segment.x2, segment.y2);
+    }
+  }
+
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const filename = `objects-${timestamp}.pdf`;
   pdf.setProperties({ title: filename });
   const blob = pdf.output('blob');
   const url = URL.createObjectURL(blob);

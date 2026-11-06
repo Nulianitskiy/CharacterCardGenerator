@@ -30,10 +30,21 @@ describe('wrapLines', () => {
 
 describe('justifyLine', () => {
   it('distributes the leftover width between words', () => {
-    // 'aa bb' at fs10: natural 25 units in a 45-unit box → 20 split over 1 gap.
+    // 'aa bb' at fs10: bare words 10+10, box 45 → 25 units per gap.
     const line = justifyLine('aa bb', 45, makeMeasure(10));
     expect(line.words).toEqual(['aa', 'bb']);
-    expect(line.gapStretch).toBeCloseTo(20, 9);
+    expect(line.gapStretch).toBeCloseTo(25, 9);
+  });
+
+  it('stretched gaps reconstruct the exact box width (draw skips space glyphs)', () => {
+    const measure = makeMeasure(10);
+    const line = justifyLine('one two three four', 90, measure);
+    let width = 0;
+    for (let i = 0; i < line.words.length; i++) {
+      width += measure(line.words[i]);
+      if (i < line.words.length - 1) width += line.gapStretch;
+    }
+    expect(width).toBeCloseTo(90, 6);
   });
 
   it('does not stretch the last line or single-word lines', () => {

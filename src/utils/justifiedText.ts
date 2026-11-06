@@ -13,20 +13,34 @@ export type MeasureText = (text: string) => number;
 /** Builds a measure function for a given font size (e.g. canvas font state). */
 export type MakeMeasure = (fontSize: number) => MeasureText;
 
-/**
- * Greedy word wrap preserving explicit line breaks. A word longer than the
- * line is kept whole (printers clip, they don't hyphenate in v1).
- */
-export const wrapLines = (text: string, maxWidth: number, measure: MeasureText): string[] => {
-  const lines: string[] = [];
+/** A wrapped line plus whether it ends its paragraph (such lines are never stretched). */
+export interface MarkedLine {
+  text: string;
+  paragraphEnd: boolean;
+}
 
-  for (const paragraph of text.split('\n')) {
+/**
+ * Like `wrapLines`, but marks the last line of every paragraph so the
+ * renderer knows which lines must NOT be justified.
+ */
+export const wrapLinesMarked = (
+  text: string,
+  maxWidth: number,
+  measure: MeasureText
+): MarkedLine[] => {
+  const paragraphs = text.split('\n');
+  const out: MarkedLine[] = [];
+
+  paragraphs.forEach((paragraph, pIndex) => {
+    const isLastParagraph = pIndex === paragraphs.length - 1;
     const words = paragraph.split(/\s+/).filter((word) => word.length > 0);
+
     if (words.length === 0) {
-      lines.push('');
-      continue;
+      out.push({ text: '', paragraphEnd: isLastParagraph });
+      return;
     }
 
+    const lines: string[] = [];
     let current = words[0];
     for (let i = 1; i < words.length; i++) {
       const candidate = `${current} ${words[i]}`;
@@ -38,10 +52,21 @@ export const wrapLines = (text: string, maxWidth: number, measure: MeasureText):
       }
     }
     lines.push(current);
-  }
 
-  return lines;
+    lines.forEach((line, lineIndex) => {
+      out.push({ text: line, paragraphEnd: isLastParagraph && lineIndex === lines.length - 1 });
+    });
+  });
+
+  return out;
 };
+
+/**
+ * Greedy word wrap preserving explicit line breaks. A word longer than the
+ * line is kept whole (printers clip, they don't hyphenate in v1).
+ */
+export const wrapLines = (text: string, maxWidth: number, measure: MeasureText): string[] =>
+  wrapLinesMarked(text, maxWidth, measure).map((line) => line.text);
 
 export interface JustifiedLine {
   /** Words to draw in order. */
@@ -65,7 +90,10 @@ export const justifyLine = (
   if (isLastLine || words.length < 2) {
     return { words, gapStretch: 0 };
   }
-  const natural = measure(words.join(' '));
+  // Drawers skip the space glyph itself: gapStretch must carry the whole
+  // inter-word distance, so natural width is the sum of bare words.
+  let natural = 0;
+  for (const word of words) natural += measure(word);
   const stretch = Math.max(0, (maxWidth - natural) / (words.length - 1));
   return { words, gapStretch: stretch };
 };
@@ -84,7 +112,7 @@ export interface TextFitRequest {
 
 export interface TextFit {
   fontSize: number;
-  lines: string[];
+  lines: MarkedLine[];
   /** True when even `minFontSize` cannot fit all lines into `height`. */
   overflow: boolean;
   lineHeight: number;
@@ -99,7 +127,7 @@ export const fitJustifiedText = (request: TextFitRequest): TextFit => {
   const { text, width, height, baseFontSize, minFontSize, lineHeightFactor, makeMeasure } = request;
 
   const layout = (fontSize: number) => {
-    const lines = wrapLines(text, width, makeMeasure(fontSize));
+    const lines = wrapLinesMarked(text, width, makeMeasure(fontSize));
     const lineHeight = fontSize * lineHeightFactor;
     return { lines, lineHeight, fits: lines.length * lineHeight <= height };
   };
