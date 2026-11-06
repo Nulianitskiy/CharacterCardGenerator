@@ -65,7 +65,9 @@ not what they print.
   - `4` — initiative cards: two faces side by side, rotated ±90° in the PDF
     (`rotatePortraitToHalf`) so the folded card hangs.
   - `20` — pawn sheet: `8 × 2` grid, sides stacked A / fold / B with a cut-out base tab
-    (`PAWN_BASE_FRACTION_OF_PAWN`). Variable-size packing lives in `src/utils/pawnLayout.ts`.
+    (`PAWN_BASE_FRACTION_OF_PAWN`). Variable-size packing lives in `src/utils/pawnLayout.ts`,
+    and mm-level sheet placement (face rects, fold and cut segments) lives in `src/utils/pdfLayout.ts`
+    — both are pure and unit-tested; `pdfGenerator.ts` only rasterizes and strokes what they return.
 - Screen side: `src/components/CardFace.tsx`, `CardSideFrame.tsx`, `FilledCharacterImage.tsx`,
   `FittedName.tsx`. PDF side: `src/utils/pdfGenerator.ts` with helpers
   (`nameLabelRender.ts`, `dndStatsRender.ts`, `imageFillLayout.ts`, `presetOverlays.ts`).

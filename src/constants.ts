@@ -79,6 +79,12 @@ export const getHalfWidth = (cardsPerPage: CardsPerPageOption): number => {
 };
 
 /**
+ * Gap between the two illustrated halves of an initiative card, centered on
+ * the fold line: each half bleeds half of this gap away from the card center.
+ */
+export const INITIATIVE_HALF_GAP_MM = 1;
+
+/**
  * Height of the illustrated face. Pawns reserve extra height for a cut tab
  * on each stacked side (A above the fold, B below).
  */
@@ -126,6 +132,21 @@ export const getSheetSideAspect = (cardsPerPage: CardsPerPageOption): number => 
 // Fold line settings
 export const FOLD_LINE_WIDTH_MM = 0.3;
 export const FOLD_LINE_DASH_MM = 3;
+
+/** Fold marks stop short of the printed area's ends by this much. */
+export const FOLD_LINE_INSET_MM = 0.5;
+
+/** Pawn base-tab fold dash stops short of the tab's sides by this much. */
+export const PAWN_BASE_DASH_INSET_MM = 0.4;
+
+/** Stroke width of the pawn base tab cut outline. */
+export const PAWN_BASE_OUTLINE_WIDTH_MM = 0.25;
+
+/**
+ * Raster density when rendering a printed half to canvas (px per mm, ~254 dpi).
+ * Keeps PDF size sane without visible print softness.
+ */
+export const PRINT_PX_PER_MM = 10;
 
 // Accepted image formats
 export const ACCEPTED_IMAGE_TYPES = [
