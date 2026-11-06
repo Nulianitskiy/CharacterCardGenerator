@@ -3,6 +3,8 @@
  * All measurements in millimeters unless otherwise noted
  */
 
+import type { ObjectTheme } from './types';
+
 // A4 page dimensions
 export const A4_WIDTH_MM = 210;
 export const A4_HEIGHT_MM = 297;
@@ -160,3 +162,101 @@ export const ACCEPTED_IMAGE_EXTENSIONS = '.jpg,.jpeg,.png,.webp,.heic,.heif';
 
 /** Ignore click if pointer moved more than this (card reorder / cover pan). */
 export const POINTER_DRAG_THRESHOLD_PX = 6;
+
+// --- Object cards (physical item cards: shirt + description pairs) ---------
+
+/** Sheet grid for object faces. */
+export const OBJECT_COLUMNS = 3;
+export const OBJECT_ROWS = 3;
+
+/** Faces printed per object: shirt first, then its description (row-major cells). */
+export const OBJECT_FACES_PER_OBJECT = 2;
+
+/** Whole objects that fit on one sheet (the odd 9th cell stays empty). */
+export const OBJECTS_PER_PAGE = Math.floor(
+  (OBJECT_COLUMNS * OBJECT_ROWS) / OBJECT_FACES_PER_OBJECT
+);
+
+export const getGameObjectCellWidth = (): number => CONTENT_WIDTH_MM / OBJECT_COLUMNS;
+export const getGameObjectCellHeight = (): number => CONTENT_HEIGHT_MM / OBJECT_ROWS;
+
+/** Rounded-corner radius of the printed card, as a fraction of the cell width. */
+export const OBJECT_CORNER_RADIUS_FRACTION = 0.05;
+
+// Shirt zones, as fractions of the face cell. The name band sits on the colored
+// card background; the image window and the slogan scroll are paper insets.
+export const OBJECT_SHIRT_NAME_FRACTION = 0.12;
+export const OBJECT_SHIRT_SCROLL_FRACTION = 0.16;
+export const OBJECT_SHIRT_GAP_FRACTION = 0.015;
+export const OBJECT_SHIRT_SIDE_INSET_FRACTION = 0.06;
+export const OBJECT_SHIRT_SCROLL_SIDE_INSET_FRACTION = 0.09;
+/** Badge diameter and its inset from the face's top-right corner, of cell width. */
+export const OBJECT_BADGE_DIAMETER_FRACTION = 0.18;
+export const OBJECT_BADGE_INSET_FRACTION = 0.045;
+
+// Description zones. Name plate and framed text box are paper on the card bg;
+// «Описание» label sits on the background between them.
+export const OBJECT_DESC_NAME_FRACTION = 0.125;
+export const OBJECT_DESC_LABEL_FRACTION = 0.045;
+export const OBJECT_DESC_SIDE_INSET_FRACTION = 0.06;
+/** Gap between the frame's outer edge and the text it contains. */
+export const OBJECT_DESC_TEXT_PADDING_FRACTION = 0.05;
+
+// Print type sizes in millimeters (screen scales from the same ratios).
+export const OBJECT_NAME_FONT_MM = 4.3;
+export const OBJECT_TEXT_FONT_MM = 3.1;
+export const OBJECT_SLOGAN_FONT_MM = 2.7;
+export const OBJECT_LABEL_FONT_MM = 2.3;
+export const OBJECT_BADGE_FONT_MM = 3.6;
+
+/** Leading for wrapped object text (× font size). */
+export const OBJECT_LINE_HEIGHT_FACTOR = 1.3;
+/** Body text may shrink this far below the base size before overflow is reported. */
+export const OBJECT_MIN_FONT_FRACTION = 0.55;
+
+/**
+ * Object card palettes — the single source of truth for object colors.
+ * The screen reads these into CSS custom properties; the PDF strokes/fills
+ * the same values.
+ */
+export interface ObjectPalette {
+  /** Card background (shirt name band, description label sit on it). */
+  cardBg: string;
+  /** Paper fill: image window, name plate, description frame, scroll body. */
+  paper: string;
+  /** Text drawn on `paper`. */
+  ink: string;
+  /** Text drawn on `cardBg` (shirt name, «Описание»). */
+  onCardBg: string;
+  /** Quantity badge circle and scroll rollers. */
+  accent: string;
+  /** Border of the description text frame. */
+  frame: string;
+}
+
+export const OBJECT_PALETTES: Record<ObjectTheme, ObjectPalette> = {
+  ruby: {
+    cardBg: '#8f1212',
+    paper: '#f7ecd2',
+    ink: '#1f1f1f',
+    onCardBg: '#fff5e6',
+    accent: '#f2b13c',
+    frame: '#5d0a0a',
+  },
+  emerald: {
+    cardBg: '#0e4d2b',
+    paper: '#f4f1e4',
+    ink: '#1a1a1a',
+    onCardBg: '#eafaea',
+    accent: '#57b06b',
+    frame: '#08341b',
+  },
+  obsidian: {
+    cardBg: '#1c1e24',
+    paper: '#e9e9ef',
+    ink: '#15161a',
+    onCardBg: '#e3e5ee',
+    accent: '#8d96a8',
+    frame: '#000000',
+  },
+};

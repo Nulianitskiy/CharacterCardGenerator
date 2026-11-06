@@ -120,6 +120,36 @@ export type PawnSize = 'medium' | 'large' | 'huge';
 export const DEFAULT_PAWN_SIZE: PawnSize = 'medium';
 
 /**
+ * Color theme of a physical object card (shirt + description pair).
+ * Palettes themselves live in `constants.ts` (`OBJECT_PALETTES`) and are read
+ * by both renderers, so screen preview and print never drift apart.
+ */
+export type ObjectTheme = 'ruby' | 'emerald' | 'obsidian';
+
+export const DEFAULT_OBJECT_THEME: ObjectTheme = 'ruby';
+
+/**
+ * One physical object card: glued pair of a «shirt» (image, name, slogan,
+ * optional quantity badge) and a «description» face (justified text in a frame).
+ */
+export interface GameObject {
+  id: string;
+  /** Portrait-like source image of the item. */
+  file: File;
+  /** Blob URL lifecycle follows the same rules as `CharacterCard.imageUrl`. */
+  imageUrl: string;
+  /** Item name, rendered on both faces. */
+  name: string;
+  /** Flavor line on the shirt scroll; empty scroll hides the banner. */
+  slogan: string;
+  /** Body text on the description face. */
+  description: string;
+  /** Optional «n штук» badge on the shirt; null hides it. */
+  quantity: number | null;
+  theme: ObjectTheme;
+}
+
+/**
  * Settings for the character name display
  */
 export interface NameSettings {

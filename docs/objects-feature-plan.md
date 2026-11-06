@@ -105,14 +105,18 @@ export type ObjectTheme = 'ruby' | 'emerald' | 'obsidian';
 
 ## 6. Этапы
 
-1. **Чистая математика** (TDD): геометрия листа и карточек в `constants.ts`
-   (`getGameObjectSize`, packing пар в сетку — новый `src/utils/objectLayout.ts`),
-   justified-раскладка — модуль + тесты.
-2. **PDF-рендер**: рубашка и описание на canvas, ветка режима в generatePDF.
+1. ✅ **Чистая математика** (TDD): геометрия листа и карточек в `constants.ts`
+   (`getGameObjectCellWidth/Height`, зоны `shirtZones`/`descriptionZones`,
+   упаковка пар `packObjectSheet`, линии реза через `gridCutSegments`) и
+   justified-раскладка `justifiedText.ts` — 24 новых тестов.
+   Принятые детали: пара — две соседние ячейки row-major; из-за нечётной сетки
+   3×3 одна пара из четырёх приходится на стык строк (рубашка в конце строки,
+   описание в начале следующей) — принято осознанно ради простой раскладки.
+2. ⬜ **PDF-рендер**: рубашка и описание на canvas, ветка режима в generatePDF.
    Проверка: смоук с генерацией PDF на 4–5 объектах, глазами + `pdfLayout`-подход.
-3. **Экран**: режим «Объекты», ObjectGrid/ObjectCard, загрузка файлов,
+3. ⬜ **Экран**: режим «Объекты», ObjectGrid/ObjectCard, загрузка файлов,
    drag-reorder, панель опций, live-превью пар.
-4. **Интеграция и полировка**: персы строки/порядка → в проект JSON (см. ROADMAP п.3),
+4. ⬜ **Интеграция и полировка**: персы строки/порядка → в проект JSON (см. ROADMAP п.3),
    README/AGENTS, smoke E2E (upload → PDF в обеих раскладках не сломалась).
 
 ## 7. Решения
