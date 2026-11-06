@@ -200,7 +200,7 @@ export function CardGrid({
   );
 
   if (cards.length === 0) {
-    return <ImageUpload variant="zone" onImagesUploaded={onImagesUploaded} />;
+    return <ImageUpload variant="zone" onUploaded={onImagesUploaded} />;
   }
 
   const aspectRatio = getSheetSideAspect(cardsPerPage);
@@ -256,7 +256,7 @@ export function CardGrid({
       <ImageUpload
         variant="tile"
         aspectRatio={aspectRatio}
-        onImagesUploaded={onImagesUploaded}
+        onUploaded={onImagesUploaded}
       />
       {drag && draggedCard && (
         <div

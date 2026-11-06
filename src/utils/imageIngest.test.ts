@@ -2,9 +2,13 @@ import { describe, expect, it, vi, afterEach } from 'vitest';
 import { defaultNameSettings, DEFAULT_IMAGE_FOCUS } from '../types';
 import {
   applyReplacedImage,
+  applyReplacedObjectImage,
   classifyImageFile,
   createCardFromImageFile,
+  createObjectFromImageFile,
   ingestImageFiles,
+  ingestImageFilesAsObjects,
+  objectNameFromFile,
 } from './imageIngest';
 
 const jpeg = (name = 'hero.jpg') => new File([new Uint8Array([1, 2, 3])], name, { type: 'image/jpeg' });
@@ -84,5 +88,62 @@ describe('card image helpers', () => {
     expect(next.imageFillMode).toBe('fitWidth');
     expect(next.imageFocus).toEqual(DEFAULT_IMAGE_FOCUS);
     expect(next.dndStats?.enabled).toBe(true);
+  });
+});
+
+describe('object image helpers', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('suggests a display name from the file name', () => {
+    expect(objectNameFromFile(jpeg('iron_ring.png'))).toBe('Iron ring');
+    expect(objectNameFromFile(jpeg('Зелье-невидимости.jpg'))).toBe('Зелье невидимости');
+    expect(objectNameFromFile(jpeg('   .jpg'))).toBe('');
+  });
+
+  it('creates an object with empty text fields and no badge', () => {
+    vi.stubGlobal('URL', {
+      createObjectURL: () => 'blob:obj',
+      revokeObjectURL: vi.fn(),
+    });
+    const object = createObjectFromImageFile(jpeg('potion.png'));
+    expect(object.imageUrl).toBe('blob:obj');
+    expect(object.name).toBe('Potion');
+    expect(object.slogan).toBe('');
+    expect(object.description).toBe('');
+    expect(object.quantity).toBeNull();
+    expect(object.theme).toBe('ruby');
+  });
+
+  it('ingests files into objects, reporting rejected types', async () => {
+    vi.stubGlobal('URL', {
+      createObjectURL: () => 'blob:ok',
+      revokeObjectURL: vi.fn(),
+    });
+    const { items, errors } = await ingestImageFilesAsObjects([text(), jpeg('a.jpg'), jpeg('b.png')]);
+    expect(items).toHaveLength(2);
+    expect(items[0].name).toBe('A');
+    expect(items[1].name).toBe('b'.toUpperCase());
+    expect(errors[0]).toMatch(/notes\.txt/);
+  });
+
+  it('replaces an object image without touching text fields', () => {
+    const revoke = vi.fn();
+    let n = 0;
+    vi.stubGlobal('URL', {
+      createObjectURL: () => `blob:${++n}`,
+      revokeObjectURL: revoke,
+    });
+    const original = createObjectFromImageFile(jpeg('old.jpg'));
+    original.description = 'Длинный текст';
+    original.quantity = 3;
+
+    const next = applyReplacedObjectImage(original, jpeg('new.jpg'));
+    expect(revoke).toHaveBeenCalledWith('blob:1');
+    expect(next.id).toBe(original.id);
+    expect(next.imageUrl).toBe('blob:2');
+    expect(next.description).toBe('Длинный текст');
+    expect(next.quantity).toBe(3);
   });
 });

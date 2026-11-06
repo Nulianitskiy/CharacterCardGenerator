@@ -4,32 +4,66 @@ import type { CharacterCard } from '../types';
 import { ingestImageFiles } from '../utils/imageIngest';
 import './ImageUpload.css';
 
-interface ImageUploadProps {
-  onImagesUploaded: (cards: CharacterCard[]) => void;
-  variant?: 'zone' | 'tile';
-  aspectRatio?: number;
+export interface UploadIngestResult<T> {
+  items: T[];
+  errors: string[];
 }
 
-export function ImageUpload({
-  onImagesUploaded,
+export interface UploadLabels {
+  zoneAria: string;
+  zoneText: string;
+  zoneHint: string;
+  addAria: string;
+  addTitle: string;
+  addLabel: string;
+}
+
+const DEFAULT_LABELS: UploadLabels = {
+  zoneAria: 'Загрузить изображения персонажей',
+  zoneText: 'Перетащите изображения персонажей сюда или нажмите, чтобы выбрать',
+  zoneHint: 'Поддерживаются JPG, PNG, WEBP и HEIC',
+  addAria: 'Добавить карточку',
+  addTitle: 'Добавить карточку',
+  addLabel: 'Добавить',
+};
+
+const CARD_INGEST = async (files: FileList): Promise<UploadIngestResult<CharacterCard>> => {
+  const { cards, errors } = await ingestImageFiles(files);
+  return { items: cards, errors };
+};
+
+interface ImageUploadProps<T> {
+  onUploaded: (items: T[]) => void;
+  variant?: 'zone' | 'tile';
+  aspectRatio?: number;
+  /** Defaults to the character-card ingest pipeline. */
+  ingest?: (files: FileList) => Promise<UploadIngestResult<T>>;
+  labels?: Partial<UploadLabels>;
+}
+
+export function ImageUpload<T = CharacterCard>({
+  onUploaded,
   variant = 'zone',
   aspectRatio,
-}: ImageUploadProps) {
+  ingest = CARD_INGEST as (files: FileList) => Promise<UploadIngestResult<T>>,
+  labels,
+}: ImageUploadProps<T>) {
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isTile = variant === 'tile';
+  const text = { ...DEFAULT_LABELS, ...labels };
 
   const processFiles = useCallback(
     async (files: FileList | null) => {
       if (!files || files.length === 0) return;
 
-      const { cards, errors } = await ingestImageFiles(files);
+      const { items, errors } = await ingest(files);
       setError(errors.length > 0 ? errors.join('\n') : null);
-      if (cards.length > 0) onImagesUploaded(cards);
+      if (items.length > 0) onUploaded(items);
     },
-    [onImagesUploaded]
+    [ingest, onUploaded]
   );
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -97,8 +131,8 @@ export function ImageUpload({
         style={aspectRatio != null ? { aspectRatio } : undefined}
         role="button"
         tabIndex={0}
-        aria-label="Добавить карточку"
-        title={error ?? 'Добавить карточку'}
+        aria-label={text.addAria}
+        title={error ?? text.addTitle}
         onClick={openFilePicker}
         onKeyDown={handleKeyDown}
         onDrop={handleDrop}
@@ -118,7 +152,7 @@ export function ImageUpload({
           <line x1="12" y1="5" x2="12" y2="19" />
           <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
-        <span className="card-add-label">Добавить</span>
+        <span className="card-add-label">{text.addLabel}</span>
         {error && (
           <span className="card-add-error" role="alert">
             Неверный формат
@@ -134,7 +168,7 @@ export function ImageUpload({
         className={`upload-zone ${isDragging ? 'upload-zone-active' : ''}`}
         role="button"
         tabIndex={0}
-        aria-label="Загрузить изображения персонажей"
+        aria-label={text.zoneAria}
         onClick={openFilePicker}
         onKeyDown={handleKeyDown}
         onDrop={handleDrop}
@@ -156,10 +190,8 @@ export function ImageUpload({
             <polyline points="17,8 12,3 7,8" />
             <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
-          <p className="upload-text">
-            Перетащите изображения персонажей сюда или нажмите, чтобы выбрать
-          </p>
-          <p className="upload-hint">Поддерживаются JPG, PNG, WEBP и HEIC</p>
+          <p className="upload-text">{text.zoneText}</p>
+          <p className="upload-hint">{text.zoneHint}</p>
         </div>
       </div>
       {error && (

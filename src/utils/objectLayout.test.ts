@@ -3,6 +3,8 @@ import type { GameObject } from '../types';
 import {
   OBJECT_COLUMNS,
   OBJECTS_PER_PAGE,
+  OBJECT_NAME_FONT_MM,
+  OBJECT_TEXT_FONT_MM,
   PAGE_MARGIN_X_MM,
   PAGE_MARGIN_Y_MM,
   CONTENT_WIDTH_MM,
@@ -11,11 +13,14 @@ import {
   getGameObjectCellHeight,
 } from '../constants';
 import {
+  descriptionPreviewLayout,
   descriptionZones,
   objectCutSegments,
   objectFaceRect,
   objectPageCount,
+  objectPreviewTypography,
   packObjectSheet,
+  shirtPreviewLayout,
   shirtZones,
 } from './objectLayout';
 
@@ -174,5 +179,49 @@ describe('descriptionZones', () => {
     const desc = descriptionZones(face);
     expect(desc.name.width).toBeCloseTo(shirt.name.width, 9);
     expect(desc.frame.width).toBeCloseTo(shirt.image.width, 9);
+  });
+});
+
+describe('screen preview layouts', () => {
+  it('shirt percentages stay inside the face and keep the zone order', () => {
+    const layout = shirtPreviewLayout(true);
+
+    for (const box of [layout.name, layout.image, layout.scroll!]) {
+      expect(box.left).toBeGreaterThanOrEqual(0);
+      expect(box.top).toBeGreaterThanOrEqual(0);
+      expect(box.left + box.width).toBeLessThanOrEqual(100.000001);
+      expect(box.top + box.height).toBeLessThanOrEqual(100.000001);
+      expect(box.width).toBeGreaterThan(0);
+      expect(box.height).toBeGreaterThan(0);
+    }
+    expect(layout.name.top + layout.name.height).toBeLessThan(layout.image.top);
+    expect(layout.image.top + layout.image.height).toBeLessThan(layout.scroll!.top);
+    expect(layout.badge.left).toBeGreaterThan(50);
+    expect(layout.badge.size).toBeGreaterThan(0);
+    expect(layout.badge.size).toBeLessThan(100 - layout.badge.left + 0.001);
+  });
+
+  it('no slogan means no scroll box and a taller image', () => {
+    const withScroll = shirtPreviewLayout(true);
+    const withoutScroll = shirtPreviewLayout(false);
+    expect(withoutScroll.scroll).toBeNull();
+    expect(withoutScroll.image.height).toBeGreaterThan(withScroll.image.height);
+  });
+
+  it('description percentages nest text inside frame inside face', () => {
+    const layout = descriptionPreviewLayout();
+    expect(layout.name.top).toBeLessThan(layout.label.top);
+    expect(layout.label.top + layout.label.height).toBeLessThanOrEqual(layout.frame.top);
+    expect(layout.text.left).toBeGreaterThan(layout.frame.left);
+    expect(layout.text.left + layout.text.width).toBeLessThan(layout.frame.left + layout.frame.width);
+    expect(layout.frame.top + layout.frame.height).toBeLessThanOrEqual(100.000001);
+  });
+
+  it('preview typography derives from print font sizes scaled to cell height', () => {
+    const type = objectPreviewTypography();
+    const cellHeight = getGameObjectCellHeight();
+    expect(type.nameCqh).toBeCloseTo((OBJECT_NAME_FONT_MM / cellHeight) * 100, 9);
+    expect(type.textCqh).toBeCloseTo((OBJECT_TEXT_FONT_MM / cellHeight) * 100, 9);
+    expect(type.textCqh).toBeLessThan(type.nameCqh);
   });
 });

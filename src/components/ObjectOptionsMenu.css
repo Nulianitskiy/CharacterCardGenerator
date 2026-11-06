@@ -1,0 +1,92 @@
+/* Object options panel. Header/sections/buttons reuse .options-* classes from
+   CardOptionsMenu.css; this file adds object-specific controls. */
+
+.object-options-menu {
+  background: transparent;
+}
+
+.object-preview {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  padding: 0.6rem;
+  border-radius: 10px;
+  background: rgba(30, 25, 20, 0.6);
+  border: 1px solid rgba(205, 173, 109, 0.2);
+}
+
+.object-pair-preview {
+  height: 150px;
+  width: auto;
+}
+
+.setting-textarea {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  background: rgba(20, 17, 12, 0.6);
+  border: 1px solid rgba(205, 173, 109, 0.3);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.setting-textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.setting-textarea-tall {
+  min-height: 120px;
+}
+
+.setting-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.setting-checkbox-row input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--gold);
+}
+
+.setting-input-narrow {
+  width: 90px;
+}
+
+.theme-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  background: rgba(20, 17, 12, 0.6);
+  border: 1px solid rgba(205, 173, 109, 0.25);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.theme-option:hover {
+  border-color: rgba(205, 173, 109, 0.6);
+}
+
+.theme-option.active {
+  border-color: var(--gold);
+  background: rgba(205, 173, 109, 0.15);
+}
+
+.theme-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  display: inline-block;
+}

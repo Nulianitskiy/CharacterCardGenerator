@@ -1,5 +1,10 @@
-import type { CharacterCard } from '../types';
-import { DEFAULT_IMAGE_FOCUS, DEFAULT_PAWN_SIZE, defaultNameSettings } from '../types';
+import type { CharacterCard, GameObject } from '../types';
+import {
+  DEFAULT_IMAGE_FOCUS,
+  DEFAULT_OBJECT_THEME,
+  DEFAULT_PAWN_SIZE,
+  defaultNameSettings,
+} from '../types';
 import { generateId } from './generateId';
 import { createDefaultDndStats } from './dndStats';
 import { get2dContext } from './canvas2d';
@@ -43,6 +48,33 @@ export const applyReplacedImage = (card: CharacterCard, file: File): CharacterCa
   };
 };
 
+/** Default object name suggestion from the file name: "iron_ring.png" → "Iron ring". */
+export const objectNameFromFile = (file: File): string => {
+  const base = file
+    .name.replace(/\.[^.]+$/, '')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!base) return '';
+  return base.charAt(0).toUpperCase() + base.slice(1);
+};
+
+export const createObjectFromImageFile = (file: File): GameObject => ({
+  id: generateId(),
+  file,
+  imageUrl: URL.createObjectURL(file),
+  name: objectNameFromFile(file),
+  slogan: '',
+  description: '',
+  quantity: null,
+  theme: DEFAULT_OBJECT_THEME,
+});
+
+export const applyReplacedObjectImage = (object: GameObject, file: File): GameObject => {
+  URL.revokeObjectURL(object.imageUrl);
+  return { ...object, file, imageUrl: URL.createObjectURL(file) };
+};
+
 const convertHeicToJpeg = async (file: File): Promise<File> => {
   if (typeof createImageBitmap !== 'function') {
     throw new Error('heic-unsupported');
@@ -81,8 +113,22 @@ const heicError = (name: string): string =>
 export const ingestImageFiles = async (
   files: Iterable<File>
 ): Promise<{ cards: CharacterCard[]; errors: string[] }> => {
+  const { items, errors } = await ingestFilesGeneric(files, createCardFromImageFile);
+  return { cards: items, errors };
+};
+
+/** Same pipeline as card ingest, but producing GameObject entries. */
+export const ingestImageFilesAsObjects = (
+  files: Iterable<File>
+): Promise<{ items: GameObject[]; errors: string[] }> =>
+  ingestFilesGeneric(files, createObjectFromImageFile);
+
+const ingestFilesGeneric = async <T>(
+  files: Iterable<File>,
+  makeItem: (prepared: File) => T
+): Promise<{ items: T[]; errors: string[] }> => {
   const errors: string[] = [];
-  const cards: CharacterCard[] = [];
+  const items: T[] = [];
   const rejectedNames: string[] = [];
 
   for (const file of files) {
@@ -92,8 +138,7 @@ export const ingestImageFiles = async (
       continue;
     }
     try {
-      const prepared = await prepareImageFile(file);
-      cards.push(createCardFromImageFile(prepared));
+      items.push(makeItem(await prepareImageFile(file)));
     } catch {
       errors.push(heicError(file.name));
     }
@@ -103,7 +148,7 @@ export const ingestImageFiles = async (
     errors.unshift(formatRejectedList(rejectedNames));
   }
 
-  return { cards, errors };
+  return { items, errors };
 };
 
 export const ingestReplacementAndExtras = async (

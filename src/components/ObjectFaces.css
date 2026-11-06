@@ -1,0 +1,127 @@
+/* Object card face previews. Geometry percentages come from objectLayout,
+   matching the PDF zones. Colors are applied inline from OBJECT_PALETTES.
+   Font mirrors the built-in "medieval" print font (see nameFont.ts and
+   cardVisuals.css .name-font-medieval — keep all in sync). */
+
+.object-face {
+  position: relative;
+  container-type: size;
+  overflow: hidden;
+  font-family: 'Old Standard TT', 'Times New Roman', serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.object-face > * {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Shirt ------------------------------------------------------------------- */
+
+.object-shirt-name span {
+  line-height: 1.15;
+  overflow-wrap: break-word;
+}
+
+.object-image-window {
+  display: block;
+  border-radius: 8%;
+  overflow: hidden;
+}
+
+.object-image-window img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.object-shirt-scroll {
+  border-radius: 4% / 12%;
+  padding: 0 12%;
+  overflow: visible;
+}
+
+/* Rolled ends: circles centered on the strip's side edges, like the PDF. */
+.object-shirt-scroll::before,
+.object-shirt-scroll::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  height: 84%;
+  aspect-ratio: 1 / 1;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: var(--roller-color, currentColor);
+  z-index: -1;
+}
+
+.object-shirt-scroll::before {
+  left: -11%;
+}
+
+.object-shirt-scroll::after {
+  right: -11%;
+}
+
+.object-shirt-scroll span {
+  line-height: 1.15;
+}
+
+.object-shirt-badge {
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  border-width: 0.55cqh;
+  border-style: solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+}
+
+.object-shirt-badge span {
+  line-height: 1;
+}
+
+/* Description -------------------------------------------------------------- */
+
+.object-desc-name {
+  border-radius: 12% / 8%;
+}
+
+.object-desc-name span {
+  line-height: 1.1;
+  overflow-wrap: break-word;
+}
+
+.object-desc-label {
+  letter-spacing: 0.04em;
+}
+
+.object-desc-frame {
+  border-style: solid;
+  border-width: 0.6cqh;
+  border-radius: 6% / 4%;
+  display: block;
+}
+
+.object-desc-text {
+  position: absolute;
+  overflow: hidden;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: justify;
+}
+
+.object-desc-text span {
+  line-height: 1.3;
+  text-align: justify;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  display: block;
+  width: 100%;
+}

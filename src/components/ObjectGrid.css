@@ -1,0 +1,128 @@
+/* Object sheet preview: tiles show a glued pair (shirt next to description). */
+
+.object-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  padding: 0.25rem 0 0;
+}
+
+.object-tile {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 6px;
+  border-radius: 10px;
+  background: rgba(20, 17, 12, 0.55);
+  border: 2px solid transparent;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.object-tile:hover,
+.object-tile:focus-visible {
+  outline: none;
+  transform: translateY(-4px);
+  border-color: var(--gold);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.5),
+    0 0 16px rgba(205, 173, 109, 0.25);
+}
+
+.object-tile.selected {
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 3px rgba(205, 173, 109, 0.4),
+    0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.object-pair {
+  display: flex;
+  height: 150px;
+  width: auto;
+  gap: 4px;
+}
+
+.object-pair-face {
+  height: 100%;
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.object-pair-face .object-face {
+  width: 100%;
+  height: 100%;
+}
+
+/* Cut-line gap between the pair mirrors the sheet: shirt | description. */
+.object-pair-face + .object-pair-face {
+  box-shadow: -2px 0 0 rgba(255, 255, 255, 0.15);
+}
+
+.object-tile-index {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  z-index: 5;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: rgba(20, 17, 12, 0.85);
+  border: 1px solid rgba(205, 173, 109, 0.45);
+  color: var(--gold);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.object-tile-remove {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--burgundy);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.object-tile:hover .object-tile-remove,
+.object-tile:focus-within .object-tile-remove,
+.object-tile-remove:focus-visible {
+  opacity: 1;
+}
+
+.object-tile-remove:hover {
+  background: #9b2c2c;
+  transform: scale(1.1);
+}
+
+/* The add tile in the object grid should match the pair tile width. */
+.object-grid .card-add {
+  height: 162px;
+}
+
+@media (hover: none) {
+  .object-tile-remove {
+    opacity: 1;
+  }
+}

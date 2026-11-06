@@ -31,6 +31,11 @@ import {
   OBJECT_DESC_LABEL_FRACTION,
   OBJECT_DESC_SIDE_INSET_FRACTION,
   OBJECT_DESC_TEXT_PADDING_FRACTION,
+  OBJECT_BADGE_FONT_MM,
+  OBJECT_LABEL_FONT_MM,
+  OBJECT_NAME_FONT_MM,
+  OBJECT_SLOGAN_FONT_MM,
+  OBJECT_TEXT_FONT_MM,
 } from '../constants';
 import type { GameObject } from '../types';
 import type { RectMm, SegmentMm } from './pdfLayout';
@@ -225,5 +230,93 @@ export const descriptionZones = (face: RectMm): DescriptionZones => {
       height: frame.height - 2 * pad,
     },
     cornerRadius: face.width * OBJECT_CORNER_RADIUS_FRACTION,
+  };
+};
+
+// --- Screen preview helpers -------------------------------------------------
+
+/**
+ * A box in face-relative percentages, ready for absolute positioning inside a
+ * preview element whose aspect matches the printed face.
+ */
+export interface PercentBox {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+export interface ShirtPreviewLayout {
+  cornerRadiusPct: number;
+  name: PercentBox;
+  image: PercentBox;
+  scroll: PercentBox | null;
+  /** Circle: left/top are of its box; diameter comes as `size` (of width). */
+  badge: { left: number; top: number; size: number };
+}
+
+export interface DescriptionPreviewLayout {
+  cornerRadiusPct: number;
+  name: PercentBox;
+  label: PercentBox;
+  frame: PercentBox;
+  text: PercentBox;
+}
+
+const toPercentBox = (rect: RectMm): PercentBox => ({
+  left: (rect.x / getGameObjectCellWidth()) * 100,
+  top: (rect.y / getGameObjectCellHeight()) * 100,
+  width: (rect.width / getGameObjectCellWidth()) * 100,
+  height: (rect.height / getGameObjectCellHeight()) * 100,
+});
+
+const previewFaceRect = (): RectMm => ({
+  x: 0,
+  y: 0,
+  width: getGameObjectCellWidth(),
+  height: getGameObjectCellHeight(),
+});
+
+/** Shirt zones in screen percentages — same source as the PDF placement. */
+export const shirtPreviewLayout = (hasSlogan: boolean): ShirtPreviewLayout => {
+  const zones = shirtZones(previewFaceRect(), hasSlogan);
+  const diameterMm = zones.badge.r * 2;
+  return {
+    cornerRadiusPct: (zones.cornerRadius / getGameObjectCellWidth()) * 100,
+    name: toPercentBox(zones.name),
+    image: toPercentBox(zones.image),
+    scroll: zones.scroll ? toPercentBox(zones.scroll) : null,
+    badge: {
+      left: ((zones.badge.cx - zones.badge.r) / getGameObjectCellWidth()) * 100,
+      top: ((zones.badge.cy - zones.badge.r) / getGameObjectCellHeight()) * 100,
+      size: (diameterMm / getGameObjectCellWidth()) * 100,
+    },
+  };
+};
+
+/** Description zones in screen percentages. */
+export const descriptionPreviewLayout = (): DescriptionPreviewLayout => {
+  const zones = descriptionZones(previewFaceRect());
+  return {
+    cornerRadiusPct: (zones.cornerRadius / getGameObjectCellWidth()) * 100,
+    name: toPercentBox(zones.name),
+    label: toPercentBox(zones.label),
+    frame: toPercentBox(zones.frame),
+    text: toPercentBox(zones.text),
+  };
+};
+
+/**
+ * Print font sizes translated to container-query heights (`cqh`) so preview
+ * type scales with the tile exactly like print type scales with the face.
+ */
+export const objectPreviewTypography = () => {
+  const cellHeight = getGameObjectCellHeight();
+  return {
+    nameCqh: (OBJECT_NAME_FONT_MM / cellHeight) * 100,
+    textCqh: (OBJECT_TEXT_FONT_MM / cellHeight) * 100,
+    sloganCqh: (OBJECT_SLOGAN_FONT_MM / cellHeight) * 100,
+    labelCqh: (OBJECT_LABEL_FONT_MM / cellHeight) * 100,
+    badgeCqh: (OBJECT_BADGE_FONT_MM / cellHeight) * 100,
   };
 };

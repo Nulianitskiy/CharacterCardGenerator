@@ -1,4 +1,4 @@
-import { CARD_SIDE_LABELS, type CardSide, type FontOption, type ImageFillMode, type NameDisplaySide, type NameFontValue, type PawnSize } from '../../types';
+import { CARD_SIDE_LABELS, type CardSide, type FontOption, type ImageFillMode, type NameDisplaySide, type NameFontValue, type ObjectTheme, type PawnSize } from '../../types';
 import { PRESET_OVERLAYS } from '../../utils/presetOverlays';
 import { makeLocalNameFont, SYSTEM_FONT_STACKS, type NameFontChoice } from '../../utils/nameFont';
 
@@ -56,6 +56,12 @@ export const PAWN_SIZE_OPTIONS: { value: PawnSize; label: string }[] = [
   { value: 'medium', label: 'Средний' },
   { value: 'large', label: 'Большой' },
   { value: 'huge', label: 'Огромный' },
+];
+
+export const OBJECT_THEME_OPTIONS: { value: ObjectTheme; label: string }[] = [
+  { value: 'ruby', label: 'Рубин' },
+  { value: 'emerald', label: 'Изумруд' },
+  { value: 'obsidian', label: 'Обсидиан' },
 ];
 
 export const FULL_PRESETS = Object.values(PRESET_OVERLAYS).filter((preset) => preset.kind === 'full');
